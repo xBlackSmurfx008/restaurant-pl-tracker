@@ -493,45 +493,66 @@ async function seedDatabase() {
       console.log(`  ✓ ${menuItemName} (${recipeItems.length} ingredients)`);
     }
 
-    // Generate a full year of fake sales data (365 days)
-    console.log('\n💰 Generating sales data for the past year...');
-    const today = new Date();
+    // Generate a full previous calendar year of fake sales data (Jan 1 -> Dec 31)
+    console.log('\n💰 Generating sales data for the previous calendar year...');
+    const previousYear = new Date().getFullYear() - 1;
+    const startOfPreviousYear = new Date(previousYear, 0, 1);
+    const endOfPreviousYear = new Date(previousYear, 11, 31);
     let salesCount = 0;
+
+    const formatDateLocal = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
     
-    // Generate data for the past 365 days
-    for (let i = 0; i < 365; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      // Vary sales probability by day of week (weekends busier)
+    for (let date = new Date(startOfPreviousYear); date <= endOfPreviousYear; date.setDate(date.getDate() + 1)) {
+      const dateStr = formatDateLocal(date);
       const dayOfWeek = date.getDay();
-      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.45 : 0.25; // Weekends 45%, weekdays 25%
-      
-      // Random sales for each menu item
+      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.50 : 0.30;
+
+      // Baseline daily activity: guarantees the 12-month timeline looks “complete”
+      const baselineItems = dayOfWeek === 0 || dayOfWeek === 6 ? 3 : 2;
+      for (let j = 0; j < baselineItems; j++) {
+        const menuItemId = pickRandom(menuItemIds);
+        const quantity = dayOfWeek === 0 || dayOfWeek === 6
+          ? Math.floor(Math.random() * 4) + 1
+          : Math.floor(Math.random() * 3) + 1;
+        await db.promisify.run(
+          `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (date, menu_item_id)
+           DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
+          [dateStr, menuItemId, quantity]
+        );
+        salesCount++;
+      }
+
+      // Additional variability
       for (const menuItemId of menuItemIds) {
         if (Math.random() < baseProbability) {
-          // Vary quantity based on day (weekends sell more)
-          const baseQuantity = dayOfWeek === 0 || dayOfWeek === 6 ? 3 : 2;
-          const quantity = Math.floor(Math.random() * (baseQuantity * 2)) + 1; // 1 to baseQuantity*2
-          
+          const max = dayOfWeek === 0 || dayOfWeek === 6 ? 7 : 5;
+          const quantity = Math.floor(Math.random() * max) + 1;
           await db.promisify.run(
-            `INSERT INTO sales_log (date, menu_item_id, quantity_sold) 
-             VALUES ($1, $2, $3) 
-             ON CONFLICT (date, menu_item_id) 
+            `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (date, menu_item_id)
              DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
             [dateStr, menuItemId, quantity]
           );
           salesCount++;
         }
       }
-      
-      // Progress indicator every 50 days
-      if ((i + 1) % 50 === 0) {
-        console.log(`  ... Processed ${i + 1} days (${salesCount} sales so far)`);
+
+      const dayIndex = Math.floor((date - startOfPreviousYear) / (1000 * 60 * 60 * 24)) + 1;
+      if (dayIndex % 50 === 0) {
+        console.log(`  ... Processed ${dayIndex} days (${salesCount} sales so far)`);
       }
     }
-    console.log(`  ✓ Generated ${salesCount} sales records for 365 days`);
+    console.log(`  ✓ Generated ${salesCount} sales records for ${previousYear}`);
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log(`\n📊 Summary:`);

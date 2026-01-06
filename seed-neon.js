@@ -54,8 +54,16 @@ const vendors = [
   { name: 'Beverage Distributors Inc.', account_number: 'BDI-2024-006', contact_person: 'Robert Taylor', phone: '(614) 555-0106', email: 'rtaylor@beverage.com', delivery_days: 'Wednesday, Friday' }
 ];
 
-// Load full data from seed-data.js
-const seedDataModule = require('./seed-data.js');
+function formatDateLocal(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 async function seedNeonDatabase() {
   try {
@@ -66,12 +74,11 @@ async function seedNeonDatabase() {
     await db.query('SELECT NOW()');
     console.log('✅ Connected to Neon database\n');
 
-    // Get the data from seed-data.js by reading it
-    const fs = require('fs');
-    const seedDataContent = fs.readFileSync('./seed-data.js', 'utf8');
-    
-    // Extract data using eval (since it's a module)
-    // Instead, we'll use the same data structure
+    console.log('🧹 Wiping existing data (TRUNCATE + RESTART IDENTITY)...');
+    await db.query('TRUNCATE sales_log, recipe_map, ingredients, menu_items, vendors RESTART IDENTITY CASCADE;');
+    console.log('✅ Database wiped\n');
+
+    // Seed data (kept inline for safety and portability)
     const ingredients = [
       // Proteins
       { name: 'Grass-fed Ground Beef (4.5oz)', vendor_id: 2, purchase_price: 8.50, purchase_unit: 'lb', usage_unit: 'oz', unit_conversion_factor: 16, yield_percent: 1.0 },
@@ -534,31 +541,46 @@ async function seedNeonDatabase() {
     }
 
     // Generate a full year of fake sales data (365 days)
-    console.log('\n💰 Generating sales data for the past year...');
-    const today = new Date();
+    console.log('\n💰 Generating sales data for the previous calendar year...');
+    const previousYear = new Date().getFullYear() - 1;
+    const startOfPreviousYear = new Date(previousYear, 0, 1);
+    const endOfPreviousYear = new Date(previousYear, 11, 31);
     let salesCount = 0;
     
-    // Generate data for the past 365 days
-    for (let i = 0; i < 365; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+    // Generate data for every day of the previous calendar year (guarantees full 12-month demo)
+    for (let date = new Date(startOfPreviousYear); date <= endOfPreviousYear; date.setDate(date.getDate() + 1)) {
+      const dateStr = formatDateLocal(date);
       
       // Vary sales probability by day of week (weekends busier)
       const dayOfWeek = date.getDay();
-      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.45 : 0.25; // Weekends 45%, weekdays 25%
+      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.50 : 0.30; // Weekends 50%, weekdays 30%
+
+      // Baseline daily activity: ensures no “empty” months/days in the demo timeline
+      const baselineItems = dayOfWeek === 0 || dayOfWeek === 6 ? 3 : 2;
+      for (let j = 0; j < baselineItems; j++) {
+        const menuItemId = pickRandom(menuItemIds);
+        const quantity = dayOfWeek === 0 || dayOfWeek === 6
+          ? Math.floor(Math.random() * 4) + 1 // 1-4
+          : Math.floor(Math.random() * 3) + 1; // 1-3
+        await db.query(
+          `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (date, menu_item_id)
+           DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
+          [dateStr, menuItemId, quantity]
+        );
+        salesCount++;
+      }
       
-      // Random sales for each menu item
+      // Additional variability: some items sell more on some days
       for (const menuItemId of menuItemIds) {
         if (Math.random() < baseProbability) {
-          // Vary quantity based on day (weekends sell more)
-          const baseQuantity = dayOfWeek === 0 || dayOfWeek === 6 ? 3 : 2;
-          const quantity = Math.floor(Math.random() * (baseQuantity * 2)) + 1; // 1 to baseQuantity*2
-          
+          const max = dayOfWeek === 0 || dayOfWeek === 6 ? 7 : 5;
+          const quantity = Math.floor(Math.random() * max) + 1; // 1-max
           await db.query(
-            `INSERT INTO sales_log (date, menu_item_id, quantity_sold) 
-             VALUES ($1, $2, $3) 
-             ON CONFLICT (date, menu_item_id) 
+            `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (date, menu_item_id)
              DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
             [dateStr, menuItemId, quantity]
           );
@@ -567,11 +589,12 @@ async function seedNeonDatabase() {
       }
       
       // Progress indicator every 50 days
-      if ((i + 1) % 50 === 0) {
-        console.log(`  ... Processed ${i + 1} days (${salesCount} sales so far)`);
+      const dayIndex = Math.floor((date - startOfPreviousYear) / (1000 * 60 * 60 * 24)) + 1;
+      if (dayIndex % 50 === 0) {
+        console.log(`  ... Processed ${dayIndex} days (${salesCount} sales so far)`);
       }
     }
-    console.log(`  ✓ Generated ${salesCount} sales records for 365 days`);
+    console.log(`  ✓ Generated ${salesCount} sales records for ${previousYear} (365 days)`);
 
     console.log('\n✅ Neon database seeding completed successfully!');
     console.log(`\n📊 Summary:`);

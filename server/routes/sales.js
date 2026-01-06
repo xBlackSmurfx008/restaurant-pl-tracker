@@ -276,9 +276,11 @@ router.get('/analytics', async (req, res) => {
         params.push(quarterStart.toISOString().split('T')[0]);
         break;
       case 'year':
-        dateFilter = "s.date >= DATE_TRUNC('year', CURRENT_DATE)::DATE";
+        // Previous full calendar year (Jan 1 -> Dec 31 of last year)
+        dateFilter = "s.date >= DATE_TRUNC('year', CURRENT_DATE - INTERVAL '1 year')::DATE AND s.date < DATE_TRUNC('year', CURRENT_DATE)::DATE";
         break;
       case 'ytd':
+        // Current year-to-date (Jan 1 -> today)
         dateFilter = "s.date >= DATE_TRUNC('year', CURRENT_DATE)::DATE";
         break;
       default:
