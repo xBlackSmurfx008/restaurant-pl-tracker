@@ -6,6 +6,8 @@ function Dashboard() {
   const [period, setPeriod] = useState('month');
   const [priceAlerts, setPriceAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortColumn, setSortColumn] = useState('net_profit');
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc'
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -35,6 +37,108 @@ function Dashboard() {
     { value: 'year', label: 'This Year' },
     { value: 'ytd', label: 'YTD' },
   ];
+
+  // Handle column sorting
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to descending
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  // Sort the breakdown data
+  const getSortedBreakdown = () => {
+    if (!analytics || !analytics.breakdown || analytics.breakdown.length === 0) {
+      return [];
+    }
+
+    return [...analytics.breakdown].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortColumn) {
+        case 'category':
+          const categoryA = categorizeMenuItem(a);
+          const categoryB = categorizeMenuItem(b);
+          aValue = categoryA.category;
+          bValue = categoryB.category;
+          break;
+        case 'menu_item_name':
+          aValue = (a.menu_item_name || '').toLowerCase();
+          bValue = (b.menu_item_name || '').toLowerCase();
+          break;
+        case 'quantity_sold':
+          aValue = a.quantity_sold || 0;
+          bValue = b.quantity_sold || 0;
+          break;
+        case 'revenue':
+          aValue = a.revenue || 0;
+          bValue = b.revenue || 0;
+          break;
+        case 'cogs':
+          aValue = a.cogs || 0;
+          bValue = b.cogs || 0;
+          break;
+        case 'labor_cogs':
+          aValue = a.labor_cogs || 0;
+          bValue = b.labor_cogs || 0;
+          break;
+        case 'total_cogs':
+          aValue = a.total_cogs || a.cogs || 0;
+          bValue = b.total_cogs || b.cogs || 0;
+          break;
+        case 'net_profit':
+          aValue = (a.net_profit !== undefined && a.net_profit !== null)
+            ? a.net_profit
+            : ((a.profit !== undefined && a.profit !== null) ? a.profit : 0);
+          bValue = (b.net_profit !== undefined && b.net_profit !== null)
+            ? b.net_profit
+            : ((b.profit !== undefined && b.profit !== null) ? b.profit : 0);
+          break;
+        case 'food_cost_percent':
+          aValue = a.food_cost_percent || 0;
+          bValue = b.food_cost_percent || 0;
+          break;
+        case 'prime_cost_percent':
+          aValue = a.prime_cost_percent || a.food_cost_percent || 0;
+          bValue = b.prime_cost_percent || b.food_cost_percent || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      // Handle string comparison
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        if (sortDirection === 'asc') {
+          return aValue.localeCompare(bValue);
+        } else {
+          return bValue.localeCompare(aValue);
+        }
+      }
+
+      // Handle number comparison
+      if (sortDirection === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+  };
+
+  // Get sort indicator for column header
+  const getSortIndicator = (column) => {
+    if (sortColumn !== column) {
+      return <span style={{ opacity: 0.3, fontSize: '0.8em' }}> ↕</span>; // Neutral indicator
+    }
+    return sortDirection === 'asc' ? (
+      <span style={{ color: '#667eea', fontWeight: 'bold' }}> ↑</span>
+    ) : (
+      <span style={{ color: '#667eea', fontWeight: 'bold' }}> ↓</span>
+    );
+  };
 
   const categorizeMenuItem = (item) => {
     // Menu Engineering Matrix with Marketing-Focused Categories
@@ -309,16 +413,256 @@ function Dashboard() {
         <table className="table">
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Menu Item</th>
-              <th>Quantity Sold</th>
-              <th>Revenue</th>
-              <th>Food Cost</th>
-              <th>Labor Cost</th>
-              <th>Prime Cost</th>
-              <th>Net Profit</th>
-              <th>Food Cost %</th>
-              <th>Prime Cost %</th>
+              <th 
+                onClick={() => handleSort('category')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'category' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'category') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'category') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by category"
+              >
+                Category{getSortIndicator('category')}
+              </th>
+              <th 
+                onClick={() => handleSort('menu_item_name')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'menu_item_name' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'menu_item_name') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'menu_item_name') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by menu item name"
+              >
+                Menu Item{getSortIndicator('menu_item_name')}
+              </th>
+              <th 
+                onClick={() => handleSort('quantity_sold')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'quantity_sold' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'quantity_sold') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'quantity_sold') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by quantity sold"
+              >
+                Quantity Sold{getSortIndicator('quantity_sold')}
+              </th>
+              <th 
+                onClick={() => handleSort('revenue')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'revenue' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'revenue') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'revenue') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by revenue"
+              >
+                Revenue{getSortIndicator('revenue')}
+              </th>
+              <th 
+                onClick={() => handleSort('cogs')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'cogs' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'cogs') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'cogs') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by food cost"
+              >
+                Food Cost{getSortIndicator('cogs')}
+              </th>
+              <th 
+                onClick={() => handleSort('labor_cogs')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'labor_cogs' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'labor_cogs') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'labor_cogs') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by labor cost"
+              >
+                Labor Cost{getSortIndicator('labor_cogs')}
+              </th>
+              <th 
+                onClick={() => handleSort('total_cogs')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'total_cogs' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'total_cogs') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'total_cogs') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by prime cost"
+              >
+                Prime Cost{getSortIndicator('total_cogs')}
+              </th>
+              <th 
+                onClick={() => handleSort('net_profit')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'net_profit' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'net_profit') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'net_profit') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by net profit"
+              >
+                Net Profit{getSortIndicator('net_profit')}
+              </th>
+              <th 
+                onClick={() => handleSort('food_cost_percent')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'food_cost_percent' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'food_cost_percent') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'food_cost_percent') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by food cost percentage"
+              >
+                Food Cost %{getSortIndicator('food_cost_percent')}
+              </th>
+              <th 
+                onClick={() => handleSort('prime_cost_percent')}
+                style={{ 
+                  cursor: 'pointer', 
+                  userSelect: 'none', 
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  background: sortColumn === 'prime_cost_percent' ? '#e3f2fd' : '#f8f9fa'
+                }}
+                onMouseEnter={(e) => {
+                  if (sortColumn !== 'prime_cost_percent') {
+                    e.currentTarget.style.background = '#e9ecef';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (sortColumn !== 'prime_cost_percent') {
+                    e.currentTarget.style.background = '#f8f9fa';
+                  } else {
+                    e.currentTarget.style.background = '#e3f2fd';
+                  }
+                }}
+                title="Click to sort by prime cost percentage"
+              >
+                Prime Cost %{getSortIndicator('prime_cost_percent')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -329,7 +673,7 @@ function Dashboard() {
                 </td>
               </tr>
             ) : (
-              analytics.breakdown.map((item) => {
+              getSortedBreakdown().map((item) => {
                 const category = categorizeMenuItem(item);
                 const netProfit = (item.net_profit !== undefined && item.net_profit !== null)
                   ? item.net_profit
