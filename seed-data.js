@@ -493,20 +493,28 @@ async function seedDatabase() {
       console.log(`  ✓ ${menuItemName} (${recipeItems.length} ingredients)`);
     }
 
-    // Generate some fake sales data for the last 30 days
-    console.log('\n💰 Generating sales data...');
+    // Generate a full year of fake sales data (365 days)
+    console.log('\n💰 Generating sales data for the past year...');
     const today = new Date();
     let salesCount = 0;
-    for (let i = 0; i < 30; i++) {
+    
+    // Generate data for the past 365 days
+    for (let i = 0; i < 365; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-
+      
+      // Vary sales probability by day of week (weekends busier)
+      const dayOfWeek = date.getDay();
+      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.45 : 0.25; // Weekends 45%, weekdays 25%
+      
       // Random sales for each menu item
       for (const menuItemId of menuItemIds) {
-        // 30% chance of sale on any given day
-        if (Math.random() < 0.3) {
-          const quantity = Math.floor(Math.random() * 5) + 1; // 1-5 items
+        if (Math.random() < baseProbability) {
+          // Vary quantity based on day (weekends sell more)
+          const baseQuantity = dayOfWeek === 0 || dayOfWeek === 6 ? 3 : 2;
+          const quantity = Math.floor(Math.random() * (baseQuantity * 2)) + 1; // 1 to baseQuantity*2
+          
           await db.promisify.run(
             `INSERT INTO sales_log (date, menu_item_id, quantity_sold) 
              VALUES ($1, $2, $3) 
@@ -517,8 +525,13 @@ async function seedDatabase() {
           salesCount++;
         }
       }
+      
+      // Progress indicator every 50 days
+      if ((i + 1) % 50 === 0) {
+        console.log(`  ... Processed ${i + 1} days (${salesCount} sales so far)`);
+      }
     }
-    console.log(`  ✓ Generated ${salesCount} sales records`);
+    console.log(`  ✓ Generated ${salesCount} sales records for 365 days`);
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log(`\n📊 Summary:`);

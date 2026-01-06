@@ -37,10 +37,10 @@ function Dashboard() {
   ];
 
   const categorizeMenuItem = (item) => {
-    // Menu Engineering Matrix
+    // Menu Engineering Matrix with Marketing-Focused Categories
     // X-axis: Profitability (net_profit), Y-axis: Popularity (quantity_sold)
     if (!analytics || !analytics.breakdown || analytics.breakdown.length === 0) {
-      return { category: 'N/A', color: '#999', icon: '❓' };
+      return { category: 'N/A', color: '#999', icon: '❓', description: 'No data available' };
     }
     const avgProfit = analytics.breakdown.reduce((sum, i) => {
       const p = (i.net_profit !== undefined && i.net_profit !== null) 
@@ -57,13 +57,33 @@ function Dashboard() {
     const isHighPopularity = (item.quantity_sold || 0) >= avgQuantity;
 
     if (isHighProfit && isHighPopularity) {
-      return { category: 'Stars', color: '#28a745', icon: '⭐' };
+      return { 
+        category: 'Champions', 
+        color: '#28a745', 
+        icon: '🏆',
+        description: 'High profit, high popularity - Your best performers! Keep promoting these.'
+      };
     } else if (!isHighProfit && isHighPopularity) {
-      return { category: 'Plowhorses', color: '#17a2b8', icon: '🐴' };
+      return { 
+        category: 'Volume Drivers', 
+        color: '#17a2b8', 
+        icon: '📊',
+        description: 'High popularity, lower profit - Great for traffic. Consider optimizing costs or portion sizes.'
+      };
     } else if (isHighProfit && !isHighPopularity) {
-      return { category: 'Puzzles', color: '#ffc107', icon: '🧩' };
+      return { 
+        category: 'Hidden Gems', 
+        color: '#ffc107', 
+        icon: '💎',
+        description: 'High profit, low popularity - Untapped potential! Market these more or adjust pricing.'
+      };
     } else {
-      return { category: 'Dogs', color: '#dc3545', icon: '🐕' };
+      return { 
+        category: 'Needs Review', 
+        color: '#dc3545', 
+        icon: '🔍',
+        description: 'Low profit, low popularity - Review pricing, costs, or consider removing from menu.'
+      };
     }
   };
 
@@ -157,16 +177,16 @@ function Dashboard() {
         <div style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#666' }}>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <span>
-              <span style={{ color: '#28a745' }}>⭐ Stars</span> - High Profit, High Popularity (Keep!)
+              <span style={{ color: '#28a745', fontWeight: '600' }}>🏆 Champions</span> - High Profit, High Popularity
             </span>
             <span>
-              <span style={{ color: '#ffc107' }}>🧩 Puzzles</span> - High Profit, Low Popularity (Reprice)
+              <span style={{ color: '#ffc107', fontWeight: '600' }}>💎 Hidden Gems</span> - High Profit, Low Popularity
             </span>
             <span>
-              <span style={{ color: '#17a2b8' }}>🐴 Plowhorses</span> - Low Profit, High Popularity (Lower portion)
+              <span style={{ color: '#17a2b8', fontWeight: '600' }}>📊 Volume Drivers</span> - Low Profit, High Popularity
             </span>
             <span>
-              <span style={{ color: '#dc3545' }}>🐕 Dogs</span> - Low Profit, Low Popularity (Remove)
+              <span style={{ color: '#dc3545', fontWeight: '600' }}>🔍 Needs Review</span> - Low Profit, Low Popularity
             </span>
           </div>
         </div>
@@ -254,8 +274,20 @@ function Dashboard() {
                   top: `${y}%`,
                   transform: 'translate(-50%, -50%)',
                   cursor: 'pointer',
+                  zIndex: 10,
                 }}
-                title={`${item.menu_item_name || 'Unknown'}: $${(profit || 0).toFixed(2)} net profit, ${item.quantity_sold || 0} sold`}
+                onClick={() => {
+                  alert(`${item.menu_item_name || 'Unknown'}\n\n${category.category} ${category.icon}\n\n${category.description}\n\nNet Profit: $${(profit || 0).toFixed(2)}\nQuantity Sold: ${item.quantity_sold || 0}\nRevenue: $${(item.revenue || 0).toFixed(2)}`);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.3)';
+                  e.currentTarget.style.zIndex = 20;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)';
+                  e.currentTarget.style.zIndex = 10;
+                }}
+                title={`${item.menu_item_name || 'Unknown'}: $${(profit || 0).toFixed(2)} net profit, ${item.quantity_sold || 0} sold\nClick for details`}
               >
                 <div
                   style={{
@@ -265,6 +297,7 @@ function Dashboard() {
                     background: category.color,
                     border: '2px solid white',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    transition: 'all 0.2s ease',
                   }}
                 />
               </div>
