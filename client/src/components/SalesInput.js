@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 function SalesInput() {
@@ -15,15 +15,7 @@ function SalesInput() {
   });
   const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    loadMenuItems();
-  }, []);
-
-  useEffect(() => {
-    loadSalesForDate();
-  }, [selectedDate]);
-
-  const loadMenuItems = async () => {
+  const loadMenuItems = useCallback(async () => {
     try {
       const data = await api.getMenuItems();
       setMenuItems(data);
@@ -32,9 +24,9 @@ function SalesInput() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadSalesForDate = async () => {
+  const loadSalesForDate = useCallback(async () => {
     try {
       setLoading(true);
       const salesData = await api.getSalesByDate(selectedDate);
@@ -48,7 +40,15 @@ function SalesInput() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    loadMenuItems();
+  }, [loadMenuItems]);
+
+  useEffect(() => {
+    loadSalesForDate();
+  }, [loadSalesForDate]);
 
   const handleQuantityChange = (menuItemId, value) => {
     const numValue = parseInt(value) || 0;
@@ -89,7 +89,8 @@ function SalesInput() {
   const calculateDailyTotal = () => {
     return menuItems.reduce((total, item) => {
       const qty = sales[item.id] || 0;
-      return total + (qty * (item.selling_price || 0));
+      const sellingPrice = parseFloat(item.selling_price) || 0;
+      return total + (qty * sellingPrice);
     }, 0);
   };
 
@@ -209,13 +210,14 @@ function SalesInput() {
             <tbody>
               {menuItems.map((item, index) => {
                 const qty = sales[item.id] || 0;
-                const subtotal = qty * (item.selling_price || 0);
+                const sellingPrice = parseFloat(item.selling_price) || 0;
+                const subtotal = qty * sellingPrice;
                 return (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.name}</strong>
                     </td>
-                    <td>${(item.selling_price || 0).toFixed(2)}</td>
+                    <td>${sellingPrice.toFixed(2)}</td>
                     <td>
                       <input
                         id={`qty-${item.id}`}
@@ -297,7 +299,7 @@ function SalesInput() {
                   <option value="">Select a menu item</option>
                   {menuItems.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.name} - ${item.selling_price?.toFixed(2)}
+                      {item.name} - ${(parseFloat(item.selling_price) || 0).toFixed(2)}
                     </option>
                   ))}
                 </select>

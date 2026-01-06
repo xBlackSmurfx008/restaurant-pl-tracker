@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 function Dashboard() {
@@ -7,11 +7,7 @@ function Dashboard() {
   const [priceAlerts, setPriceAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [period]);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       const [analyticsData, alertsData] = await Promise.all([
@@ -25,7 +21,11 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   const periods = [
     { value: 'today', label: 'Today' },
@@ -241,13 +241,6 @@ function Dashboard() {
               return p;
             }));
             const maxQuantity = Math.max(...analytics.breakdown.map((i) => (i.quantity_sold || 0)));
-            const avgProfit = analytics.breakdown.reduce((sum, i) => {
-              const p = (i.net_profit !== undefined && i.net_profit !== null) 
-                ? i.net_profit 
-                : ((i.profit !== undefined && i.profit !== null) ? i.profit : 0);
-              return sum + p;
-            }, 0) / analytics.breakdown.length;
-            const avgQuantity = analytics.breakdown.reduce((sum, i) => sum + (i.quantity_sold || 0), 0) / analytics.breakdown.length;
 
             const x = maxProfit > 0 ? ((profit / maxProfit) * 100) : 0;
             const y = maxQuantity > 0 ? (100 - ((item.quantity_sold || 0) / maxQuantity) * 100) : 0;
