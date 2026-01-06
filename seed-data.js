@@ -554,6 +554,52 @@ async function seedDatabase() {
     }
     console.log(`  ✓ Generated ${salesCount} sales records for ${previousYear}`);
 
+    // Also seed current year-to-date so Today/Week/Month/Quarter/YTD views are populated locally
+    console.log('\n📅 Seeding current year-to-date sales (for Today/Week/Month/Quarter/YTD views)...');
+    const currentYear = new Date().getFullYear();
+    const startOfCurrentYear = new Date(currentYear, 0, 1);
+    const today = new Date();
+    let ytdSalesCount = 0;
+
+    for (let date = new Date(startOfCurrentYear); date <= today; date.setDate(date.getDate() + 1)) {
+      const dateStr = formatDateLocal(date);
+      const dayOfWeek = date.getDay();
+      const baseProbability = dayOfWeek === 0 || dayOfWeek === 6 ? 0.45 : 0.28;
+
+      const baselineItems = dayOfWeek === 0 || dayOfWeek === 6 ? 2 : 1;
+      for (let j = 0; j < baselineItems; j++) {
+        const menuItemId = pickRandom(menuItemIds);
+        const quantity = dayOfWeek === 0 || dayOfWeek === 6
+          ? Math.floor(Math.random() * 3) + 1
+          : Math.floor(Math.random() * 2) + 1;
+        await db.promisify.run(
+          `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (date, menu_item_id)
+           DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
+          [dateStr, menuItemId, quantity]
+        );
+        ytdSalesCount++;
+      }
+
+      for (const menuItemId of menuItemIds) {
+        if (Math.random() < baseProbability) {
+          const max = dayOfWeek === 0 || dayOfWeek === 6 ? 4 : 3;
+          const quantity = Math.floor(Math.random() * max) + 1;
+          await db.promisify.run(
+            `INSERT INTO sales_log (date, menu_item_id, quantity_sold)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (date, menu_item_id)
+             DO UPDATE SET quantity_sold = sales_log.quantity_sold + EXCLUDED.quantity_sold`,
+            [dateStr, menuItemId, quantity]
+          );
+          ytdSalesCount++;
+        }
+      }
+    }
+
+    console.log(`  ✓ Generated ${ytdSalesCount} YTD sales rows for ${currentYear} (so far)`);
+
     console.log('\n✅ Database seeding completed successfully!');
     console.log(`\n📊 Summary:`);
     console.log(`   - Vendors: ${vendorIds.length}`);
