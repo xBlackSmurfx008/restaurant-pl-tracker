@@ -18,8 +18,8 @@ function ReportsPanel() {
   const reports = [
     { id: 'pnl', label: 'P&L Statement' },
     { id: 'cash-flow', label: 'Cash Flow' },
-    { id: 'daily', label: 'Daily Summary', icon: '📅' },
-    { id: 'vendor', label: 'Vendor Analysis', icon: '🏪' },
+    { id: 'daily', label: 'Daily Summary' },
+    { id: 'vendor', label: 'Vendor Analysis' },
     { id: 'budget', label: 'Budget vs Actual' },
   ];
 
@@ -547,7 +547,7 @@ function ReportsPanel() {
             className={`tab-button ${activeReport === r.id ? 'active' : ''}`}
             onClick={() => setActiveReport(r.id)}
           >
-            {r.icon} {r.label}
+            {r.label}
           </button>
         ))}
       </div>

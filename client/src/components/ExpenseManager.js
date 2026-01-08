@@ -122,9 +122,9 @@ function ExpenseManager() {
   };
 
   const expenseTypes = [
-    { value: 'cogs', label: 'Cost of Goods Sold', color: '#dc3545', icon: '📦' },
-    { value: 'operating', label: 'Operating Expenses', color: '#17a2b8', icon: '🏢' },
-    { value: 'marketing', label: 'Marketing', color: '#ffc107', icon: '📣' },
+    { value: 'cogs', label: 'Cost of Goods Sold', color: '#dc3545' },
+    { value: 'operating', label: 'Operating Expenses', color: '#17a2b8' },
+    { value: 'marketing', label: 'Marketing', color: '#ffc107' },
     { value: 'payroll', label: 'Payroll', color: '#28a745' },
     { value: 'other', label: 'Other', color: '#6c757d' }
   ];
@@ -171,7 +171,7 @@ function ExpenseManager() {
             const typeData = summary.summary?.find(s => s.expense_type === type.value);
             return (
               <div key={type.value} className="metric-card">
-                <div className="metric-label">{type.icon} {type.label}</div>
+                <div className="metric-label">{type.label}</div>
                 <div className="metric-value" style={{ color: type.color }}>
                   ${(parseFloat(typeData?.total_amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
@@ -380,7 +380,7 @@ function ExpenseManager() {
                       <td>{new Date(expense.expense_date).toLocaleDateString()}</td>
                       <td>
                         <span style={{ color: typeInfo?.color }}>
-                          {typeInfo?.icon} {expense.category_name}
+                          {expense.category_name}
                         </span>
                       </td>
                       <td>{expense.vendor_name || '-'}</td>
@@ -419,7 +419,7 @@ function ExpenseManager() {
               return (
                 <div key={item.expense_type} style={{ marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span>{typeInfo?.icon} {typeInfo?.label || item.expense_type}</span>
+                    <span>{typeInfo?.label || item.expense_type}</span>
                     <span style={{ fontWeight: '600' }}>
                       ${parseFloat(item.total_amount).toLocaleString()} ({percentage}%)
                     </span>

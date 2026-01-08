@@ -144,7 +144,7 @@ function Dashboard() {
     // Menu Engineering Matrix with Marketing-Focused Categories
     // X-axis: Profitability (net_profit), Y-axis: Popularity (quantity_sold)
     if (!analytics || !analytics.breakdown || analytics.breakdown.length === 0) {
-      return { category: 'N/A', color: '#999', icon: '❓', description: 'No data available' };
+      return { category: 'N/A', color: '#999', icon: '', description: 'No data available' };
     }
     const avgProfit = analytics.breakdown.reduce((sum, i) => {
       const p = (i.net_profit !== undefined && i.net_profit !== null) 
@@ -164,7 +164,7 @@ function Dashboard() {
       return { 
         category: 'Champions', 
         color: '#28a745', 
-        icon: '🏆',
+        icon: '',
         description: 'High profit, high popularity - Your best performers! Keep promoting these.'
       };
     } else if (!isHighProfit && isHighPopularity) {
@@ -178,14 +178,14 @@ function Dashboard() {
       return { 
         category: 'Hidden Gems', 
         color: '#ffc107', 
-        icon: '💎',
+        icon: '',
         description: 'High profit, low popularity - Untapped potential! Market these more or adjust pricing.'
       };
     } else {
       return { 
         category: 'Needs Review', 
         color: '#dc3545', 
-        icon: '🔍',
+        icon: '',
         description: 'Low profit, low popularity - Review pricing, costs, or consider removing from menu.'
       };
     }
@@ -381,7 +381,7 @@ function Dashboard() {
                   zIndex: 10,
                 }}
                 onClick={() => {
-                  alert(`${item.menu_item_name || 'Unknown'}\n\n${category.category} ${category.icon}\n\n${category.description}\n\nNet Profit: $${(profit || 0).toFixed(2)}\nQuantity Sold: ${item.quantity_sold || 0}\nRevenue: $${(item.revenue || 0).toFixed(2)}`);
+                  alert(`${item.menu_item_name || 'Unknown'}\n\n${category.category}\n\n${category.description}\n\nNet Profit: $${(profit || 0).toFixed(2)}\nQuantity Sold: ${item.quantity_sold || 0}\nRevenue: $${(item.revenue || 0).toFixed(2)}`);
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.3)';
@@ -689,7 +689,7 @@ function Dashboard() {
                   <tr key={item.menu_item_id || `item-${Math.random()}`}>
                     <td>
                       <span style={{ color: category.color, fontWeight: '600' }}>
-                        {category.icon} {category.category}
+                        {category.category}
                       </span>
                     </td>
                     <td>{item.menu_item_name || 'Unknown'}</td>

@@ -9,9 +9,9 @@ function TaxCenter() {
 
   const tabs = [
     { id: 'schedule-c', label: 'Schedule C' },
-    { id: 'quarterly', label: 'Quarterly Estimates', icon: '📆' },
-    { id: '1099', label: '1099 Vendors', icon: '📄' },
-    { id: 'expenses', label: 'Expense Details', icon: '🧾' },
+    { id: 'quarterly', label: 'Quarterly Estimates' },
+    { id: '1099', label: '1099 Vendors' },
+    { id: 'expenses', label: 'Expense Details' },
   ];
 
   const loadData = useCallback(async () => {
@@ -452,7 +452,7 @@ function TaxCenter() {
             className={`tab-button ${activeTab === t.id ? 'active' : ''}`}
             onClick={() => setActiveTab(t.id)}
           >
-            {t.icon} {t.label}
+            {t.label}
           </button>
         ))}
       </div>

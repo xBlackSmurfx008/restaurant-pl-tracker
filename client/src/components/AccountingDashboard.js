@@ -22,8 +22,8 @@ function AccountingDashboard() {
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
-    { id: 'payables', label: 'Accounts Payable', icon: '📤' },
-    { id: 'receivables', label: 'Accounts Receivable', icon: '📥' },
+    { id: 'payables', label: 'Accounts Payable' },
+    { id: 'receivables', label: 'Accounts Receivable' },
     { id: 'bank', label: 'Bank Accounts' },
     { id: 'settings', label: 'Settings' },
   ];
@@ -596,7 +596,7 @@ function AccountingDashboard() {
             className={`tab-button ${activeTab === t.id ? 'active' : ''}`}
             onClick={() => setActiveTab(t.id)}
           >
-            {t.icon} {t.label}
+            {t.label}
           </button>
         ))}
       </div>

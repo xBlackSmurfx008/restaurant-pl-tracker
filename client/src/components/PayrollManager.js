@@ -534,7 +534,7 @@ function PayrollManager() {
             className={`tab-button ${activeTab === t.id ? 'active' : ''}`}
             onClick={() => setActiveTab(t.id)}
           >
-            {t.icon} {t.label}
+            {t.label}
           </button>
         ))}
       </div>
