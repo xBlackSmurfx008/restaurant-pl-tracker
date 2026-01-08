@@ -11,34 +11,91 @@ import TaxCenter from './components/TaxCenter';
 import PayrollManager from './components/PayrollManager';
 import AccountingDashboard from './components/AccountingDashboard';
 import Login from './components/Login';
+import Tutorial from './components/Tutorial';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeSection, setActiveSection] = useState('operations');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing session on mount
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('user');
+    
     if (token && savedUser) {
       setIsAuthenticated(true);
       setUser(JSON.parse(savedUser));
+      
+      // Check if tutorial has been completed
+      const tutorialComplete = localStorage.getItem('tutorialComplete');
+      if (!tutorialComplete) {
+        setShowTutorial(true);
+      }
     }
+    
+    setIsLoading(false);
   }, []);
 
   const handleLogin = (userData, token) => {
     setIsAuthenticated(true);
     setUser(userData);
+    
+    // Check if this is a new user who hasn't seen the tutorial
+    const tutorialComplete = localStorage.getItem('tutorialComplete');
+    if (!tutorialComplete) {
+      setShowTutorial(true);
+    }
   };
 
-  const handleLogout = () => {
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+  };
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    if (token) {
+      try {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        console.error('Logout API call failed:', error);
+      }
+    }
+    
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);
+    
+    // Redirect to about page after logout
+    window.location.href = '/about.html';
   };
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh',
+        background: '#1A1A1A'
+      }}>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
 
   // Show login page if not authenticated
   if (!isAuthenticated) {
@@ -74,6 +131,9 @@ function App() {
 
   return (
     <div className="App">
+      {/* Tutorial Overlay */}
+      {showTutorial && <Tutorial onComplete={handleTutorialComplete} />}
+
       <header className="app-header">
         <div className="header-brand">
           <h1>

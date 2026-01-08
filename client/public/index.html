@@ -18,6 +18,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <title>Flavor 91 Bistro | P&L Tracker</title>
+    
+    <!-- Redirect to about.html if not logged in and not explicitly requesting login -->
+    <script>
+      (function() {
+        var hasToken = localStorage.getItem('authToken');
+        var wantsLogin = window.location.search.includes('login=true');
+        
+        // If no auth token and not explicitly requesting login, go to about page
+        if (!hasToken && !wantsLogin) {
+          window.location.replace('/about.html');
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

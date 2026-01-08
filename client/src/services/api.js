@@ -1,6 +1,106 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 class ApiService {
+  // ============================================
+  // AUTHENTICATION
+  // ============================================
+
+  /**
+   * Get the stored auth token
+   * @returns {string|null} The auth token or null
+   */
+  getAuthToken() {
+    return localStorage.getItem('authToken');
+  }
+
+  /**
+   * Get the stored user info
+   * @returns {object|null} The user object or null
+   */
+  getUser() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  }
+
+  /**
+   * Check if user is authenticated
+   * @returns {boolean}
+   */
+  isAuthenticated() {
+    return !!this.getAuthToken();
+  }
+
+  /**
+   * Login user
+   * @param {string} email - User email
+   * @param {string} password - User password
+   * @returns {Promise<object>} Login result with token and user
+   */
+  async login(email, password) {
+    const result = await this.request('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+    });
+    
+    // Store token and user
+    localStorage.setItem('authToken', result.token);
+    localStorage.setItem('user', JSON.stringify(result.user));
+    
+    return result;
+  }
+
+  /**
+   * Logout user - invalidates session on server and clears local storage
+   * @returns {Promise<void>}
+   */
+  async logout() {
+    const token = this.getAuthToken();
+    
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        // Logout should still proceed even if the API call fails
+        console.error('Logout API call failed:', error);
+      }
+    }
+    
+    // Clear local storage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+  }
+
+  /**
+   * Make an authenticated request (automatically includes auth token)
+   * @param {string} endpoint - API endpoint
+   * @param {object} options - Fetch options
+   * @returns {Promise<any>}
+   */
+  async authenticatedRequest(endpoint, options = {}) {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+    
+    return this.request(endpoint, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // ============================================
+  // BASE REQUEST
+  // ============================================
+
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const config = {

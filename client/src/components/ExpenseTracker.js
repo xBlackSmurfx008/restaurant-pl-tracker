@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 
 function ExpenseTracker() {
@@ -39,6 +39,9 @@ function ExpenseTracker() {
   // Upload state
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [pendingFiles, setPendingFiles] = useState([]); // Files to upload with new expense
+  const [dragActive, setDragActive] = useState(false);
+  const quickUploadRef = useRef(null);
 
   // Line item form
   const [showLineItemForm, setShowLineItemForm] = useState(false);
@@ -93,11 +96,33 @@ function ExpenseTracker() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let expenseId;
+      let vendorId = formData.vendor_id;
+      
       if (editingExpense) {
         await api.updateExpense(editingExpense.id, formData);
+        expenseId = editingExpense.id;
       } else {
-        await api.createExpense(formData);
+        const result = await api.createExpense(formData);
+        expenseId = result.id;
       }
+      
+      // Upload any pending files
+      if (pendingFiles.length > 0 && expenseId) {
+        setUploading(true);
+        try {
+          for (let i = 0; i < pendingFiles.length; i++) {
+            setUploadProgress(`Uploading ${i + 1}/${pendingFiles.length}: ${pendingFiles[i].name}`);
+            await api.uploadFile(pendingFiles[i], expenseId, vendorId);
+          }
+        } catch (uploadError) {
+          alert('Expense saved but some files failed to upload: ' + uploadError.message);
+        } finally {
+          setUploading(false);
+          setUploadProgress('');
+        }
+      }
+      
       setShowForm(false);
       setEditingExpense(null);
       resetForm();
@@ -118,6 +143,7 @@ function ExpenseTracker() {
       reference_number: '',
       notes: '',
     });
+    setPendingFiles([]);
   };
 
   const handleEdit = (expense) => {
@@ -148,7 +174,7 @@ function ExpenseTracker() {
     }
   };
 
-  // File upload
+  // File upload for existing expense
   const handleFileUpload = async (e) => {
     const files = e.target.files;
     if (!files.length || !selectedExpense) return;
@@ -167,6 +193,79 @@ function ExpenseTracker() {
       setUploading(false);
       e.target.value = '';
     }
+  };
+
+  // Handle pending files for new expense
+  const handlePendingFiles = (files) => {
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(f => 
+      f.type.includes('pdf') || f.type.includes('image')
+    );
+    if (validFiles.length > 0) {
+      setPendingFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e, forExpense = null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      if (forExpense) {
+        // Upload directly to expense
+        uploadFilesToExpense(files, forExpense);
+      } else {
+        // Add to pending files
+        handlePendingFiles(files);
+      }
+    }
+  };
+
+  // Upload files directly to an expense
+  const uploadFilesToExpense = async (files, expense) => {
+    setUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress(`Uploading ${i + 1}/${files.length}: ${files[i].name}`);
+        await api.uploadFile(files[i], expense.id, expense.vendor_id);
+      }
+      setUploadProgress('');
+      if (selectedExpense?.id === expense.id) {
+        loadExpenseDetails(expense.id);
+      }
+      loadData();
+    } catch (error) {
+      alert('Upload failed: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Remove pending file
+  const removePendingFile = (index) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Quick upload handler - creates expense and attaches files
+  const handleQuickUpload = async (files) => {
+    if (!files.length) return;
+    
+    // Open the form with files ready
+    setShowForm(true);
+    handlePendingFiles(files);
   };
 
   // Download document
@@ -241,10 +340,85 @@ function ExpenseTracker() {
       {/* Header */}
       <div className="card-header">
         <h2 className="card-title">💸 Expense Tracker</h2>
-        <button className="btn btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
-          + Add Expense
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {uploadConfigured && (
+            <label 
+              className="btn btn-secondary" 
+              style={{ 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px',
+                background: '#2D6B4F',
+                border: '2px dashed #4CAF50',
+              }}
+            >
+              📄 Upload Receipt/Invoice
+              <input
+                type="file"
+                ref={quickUploadRef}
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files.length) {
+                    handleQuickUpload(e.target.files);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </label>
+          )}
+          <button className="btn btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
+            + Add Expense
+          </button>
+        </div>
       </div>
+      
+      {/* Upload Progress Banner */}
+      {uploading && (
+        <div style={{
+          background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
+          border: '2px solid #2196F3',
+          borderRadius: '8px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          <div className="spinner" style={{ width: '24px', height: '24px', margin: 0 }}></div>
+          <div>
+            <strong style={{ color: '#1565C0' }}>Uploading Documents...</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#1976D2' }}>
+              {uploadProgress || 'Please wait...'}
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Upload Status Banner */}
+      {!uploadConfigured && (
+        <div style={{
+          background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)',
+          border: '1px solid #FF9800',
+          borderRadius: '8px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+          <div>
+            <strong style={{ color: '#E65100' }}>Document Upload Not Configured</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#BF360C' }}>
+              Contact your administrator to enable PDF/receipt uploads via Supabase storage.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="card" style={{ marginBottom: '20px' }}>
@@ -320,7 +494,7 @@ function ExpenseTracker() {
                   <th>Description</th>
                   <th>Vendor</th>
                   <th>Amount</th>
-                  <th>Docs</th>
+                  <th>📎 Receipts</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -340,17 +514,51 @@ function ExpenseTracker() {
                     </td>
                     <td>{expense.vendor_name || '—'}</td>
                     <td style={{ fontWeight: '600' }}>{formatCurrency(expense.amount)}</td>
-                    <td>
-                      {expense.document_count > 0 && (
-                        <span style={{ 
-                          background: '#e3f2fd', 
-                          padding: '2px 8px', 
-                          borderRadius: '12px',
-                          fontSize: '0.85rem'
-                        }}>
-                          📎 {expense.document_count}
-                        </span>
-                      )}
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {expense.document_count > 0 ? (
+                          <span style={{ 
+                            background: '#e3f2fd', 
+                            padding: '4px 10px', 
+                            borderRadius: '12px',
+                            fontSize: '0.85rem',
+                            fontWeight: '500'
+                          }}>
+                            📎 {expense.document_count}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#ccc', fontSize: '0.85rem' }}>—</span>
+                        )}
+                        {uploadConfigured && (
+                          <label style={{ 
+                            cursor: 'pointer',
+                            background: '#E8F5E9',
+                            border: '1px solid #4CAF50',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            fontSize: '0.75rem',
+                            color: '#2E7D32',
+                            fontWeight: '500',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            📤
+                            <input
+                              type="file"
+                              multiple
+                              accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                if (e.target.files.length) {
+                                  uploadFilesToExpense(e.target.files, expense);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <button 
@@ -412,13 +620,36 @@ function ExpenseTracker() {
               </div>
             </div>
 
-            {/* Documents Section */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h4>📎 Documents ({documents.length})</h4>
+            {/* Documents Section - Made More Prominent */}
+            <div style={{ 
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%)',
+              borderRadius: '12px',
+              padding: '16px',
+              border: '2px solid #c8e6c9'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>📎</span> 
+                  Documents ({documents.length})
+                </h4>
                 {uploadConfigured ? (
-                  <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-                    {uploading ? uploadProgress : '+ Upload'}
+                  <label 
+                    className="btn btn-primary" 
+                    style={{ 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 18px',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    {uploading ? (
+                      <>{uploadProgress}</>
+                    ) : (
+                      <>📤 Upload PDF/Image</>
+                    )}
                     <input
                       type="file"
                       multiple
@@ -429,11 +660,42 @@ function ExpenseTracker() {
                     />
                   </label>
                 ) : (
-                  <span style={{ color: '#999', fontSize: '0.85rem' }}>
-                    Uploads not configured
+                  <span style={{ 
+                    color: '#f57c00', 
+                    fontSize: '0.85rem',
+                    background: '#fff3e0',
+                    padding: '6px 12px',
+                    borderRadius: '4px'
+                  }}>
+                    ⚠️ Uploads not configured
                   </span>
                 )}
               </div>
+              
+              {/* Drop Zone for existing expense */}
+              {uploadConfigured && (
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={(e) => handleDrop(e, selectedExpense)}
+                  style={{
+                    border: dragActive ? '2px solid #4CAF50' : '2px dashed #9AC636',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    marginBottom: '12px',
+                    background: dragActive ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255,255,255,0.8)',
+                    textAlign: 'center',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>📄</span>
+                  <span style={{ marginLeft: '8px', color: '#666' }}>
+                    Drop files here to attach to this expense
+                  </span>
+                </div>
+              )}
+              
               {documents.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {documents.map((doc) => (
@@ -443,39 +705,65 @@ function ExpenseTracker() {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         alignItems: 'center',
-                        background: '#f8f9fa',
-                        padding: '10px',
-                        borderRadius: '6px'
+                        background: 'white',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                       }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {doc.mime_type?.includes('pdf') ? 'PDF' : 'IMG'}
-                        {doc.original_filename}
-                        <span style={{ color: '#999', fontSize: '0.8rem' }}>
-                          ({Math.round((doc.size_bytes || 0) / 1024)} KB)
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ 
+                          fontSize: '1.5rem',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: doc.mime_type?.includes('pdf') ? '#FFEBEE' : '#E3F2FD',
+                          borderRadius: '8px'
+                        }}>
+                          {doc.mime_type?.includes('pdf') ? '📄' : '🖼️'}
                         </span>
+                        <div>
+                          <div style={{ fontWeight: '500' }}>{doc.original_filename}</div>
+                          <div style={{ color: '#999', fontSize: '0.8rem' }}>
+                            {Math.round((doc.size_bytes || 0) / 1024)} KB
+                          </div>
+                        </div>
                       </span>
-                      <div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <button 
                           className="btn btn-secondary" 
-                          style={{ padding: '4px 10px', marginRight: '5px' }}
+                          style={{ padding: '8px 14px' }}
                           onClick={() => handleDownload(doc)}
                         >
-                          Download
+                          ⬇️ View
                         </button>
                         <button 
                           className="btn btn-danger" 
-                          style={{ padding: '4px 10px' }}
+                          style={{ padding: '8px 12px' }}
                           onClick={() => handleDeleteDocument(doc.id)}
                         >
-                          ×
+                          🗑️
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p style={{ color: '#999', fontSize: '0.9rem' }}>No documents attached</p>
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '20px',
+                  color: '#666',
+                  background: 'rgba(255,255,255,0.6)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px', opacity: 0.5 }}>📎</div>
+                  <p style={{ margin: 0, fontSize: '0.95rem' }}>No documents attached yet</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#999' }}>
+                    Upload receipts, invoices, or other supporting documents
+                  </p>
+                </div>
               )}
             </div>
 
@@ -547,10 +835,108 @@ function ExpenseTracker() {
           justifyContent: 'center',
           zIndex: 1000
         }}>
-          <div className="card" style={{ width: '500px', maxHeight: '90vh', overflow: 'auto' }}>
+          <div className="card" style={{ width: '560px', maxHeight: '90vh', overflow: 'auto' }}>
             <h3 style={{ marginBottom: '20px' }}>
               {editingExpense ? 'Edit Expense' : 'Add Expense'}
             </h3>
+            
+            {/* Upload Zone - Prominent at the top */}
+            {uploadConfigured && (
+              <div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={(e) => handleDrop(e)}
+                style={{
+                  border: dragActive ? '3px solid #4CAF50' : '3px dashed #9AC636',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  marginBottom: '24px',
+                  background: dragActive ? 'rgba(76, 175, 80, 0.1)' : 'linear-gradient(135deg, rgba(154, 198, 54, 0.08) 0%, rgba(154, 198, 54, 0.15) 100%)',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer'
+                }}
+                onClick={() => document.getElementById('form-file-input').click()}
+              >
+                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
+                <div style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: '600', 
+                  color: '#1A1A1A',
+                  marginBottom: '4px'
+                }}>
+                  Drop Receipt or Invoice Here
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                  or <span style={{ color: '#9AC636', fontWeight: '600', textDecoration: 'underline' }}>click to browse</span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '8px' }}>
+                  Supports PDF, PNG, JPG, JPEG, GIF, WEBP
+                </div>
+                <input
+                  id="form-file-input"
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    handlePendingFiles(e.target.files);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Pending Files Preview */}
+            {pendingFiles.length > 0 && (
+              <div style={{
+                background: '#E8F5E9',
+                border: '1px solid #4CAF50',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#2E7D32' }}>
+                  📎 {pendingFiles.length} file(s) ready to upload
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {pendingFiles.map((file, idx) => (
+                    <div key={idx} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '4px'
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {file.type.includes('pdf') ? '📄' : '🖼️'}
+                        <span style={{ fontSize: '0.9rem' }}>{file.name}</span>
+                        <span style={{ fontSize: '0.8rem', color: '#999' }}>
+                          ({Math.round(file.size / 1024)} KB)
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePendingFile(idx)}
+                        style={{
+                          background: '#ffebee',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          cursor: 'pointer',
+                          color: '#c62828'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">Date *</label>
