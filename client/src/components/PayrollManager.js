@@ -27,6 +27,7 @@ function PayrollManager() {
   });
 
   // Run Payroll
+  // eslint-disable-next-line no-unused-vars
   const [showRunPayroll, setShowRunPayroll] = useState(false);
   const [payrollPeriod, setPayrollPeriod] = useState({
     start: '',

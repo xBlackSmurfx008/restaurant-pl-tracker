@@ -112,6 +112,7 @@ function ReportsPanel() {
   // Render P&L Statement
   const renderPnL = () => {
     if (!reportData) return null;
+    // eslint-disable-next-line no-unused-vars
     const { revenue, cost_of_goods_sold, gross_profit, operating_expenses, 
             marketing_expenses, payroll, other_expenses, net_income, ratios, comparison } = reportData;
 
