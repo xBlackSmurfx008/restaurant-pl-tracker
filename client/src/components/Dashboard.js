@@ -134,9 +134,9 @@ function Dashboard() {
       return <span style={{ opacity: 0.3, fontSize: '0.8em' }}> ↕</span>; // Neutral indicator
     }
     return sortDirection === 'asc' ? (
-      <span style={{ color: '#667eea', fontWeight: 'bold' }}> ↑</span>
+      <span style={{ color: '#9AC636', fontWeight: 'bold' }}> ↑</span>
     ) : (
-      <span style={{ color: '#667eea', fontWeight: 'bold' }}> ↓</span>
+      <span style={{ color: '#9AC636', fontWeight: 'bold' }}> ↓</span>
     );
   };
 
@@ -420,7 +420,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'category' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'category' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'category') {
@@ -431,7 +431,7 @@ function Dashboard() {
                   if (sortColumn !== 'category') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by category"
@@ -445,7 +445,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'menu_item_name' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'menu_item_name' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'menu_item_name') {
@@ -456,7 +456,7 @@ function Dashboard() {
                   if (sortColumn !== 'menu_item_name') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by menu item name"
@@ -470,7 +470,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'quantity_sold' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'quantity_sold' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'quantity_sold') {
@@ -481,7 +481,7 @@ function Dashboard() {
                   if (sortColumn !== 'quantity_sold') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by quantity sold"
@@ -495,7 +495,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'revenue' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'revenue' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'revenue') {
@@ -506,7 +506,7 @@ function Dashboard() {
                   if (sortColumn !== 'revenue') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by revenue"
@@ -520,7 +520,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'cogs' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'cogs' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'cogs') {
@@ -531,7 +531,7 @@ function Dashboard() {
                   if (sortColumn !== 'cogs') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by food cost"
@@ -545,7 +545,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'labor_cogs' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'labor_cogs' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'labor_cogs') {
@@ -556,7 +556,7 @@ function Dashboard() {
                   if (sortColumn !== 'labor_cogs') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by labor cost"
@@ -570,7 +570,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'total_cogs' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'total_cogs' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'total_cogs') {
@@ -581,7 +581,7 @@ function Dashboard() {
                   if (sortColumn !== 'total_cogs') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by prime cost"
@@ -595,7 +595,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'net_profit' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'net_profit' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'net_profit') {
@@ -606,7 +606,7 @@ function Dashboard() {
                   if (sortColumn !== 'net_profit') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by net profit"
@@ -620,7 +620,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'food_cost_percent' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'food_cost_percent' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'food_cost_percent') {
@@ -631,7 +631,7 @@ function Dashboard() {
                   if (sortColumn !== 'food_cost_percent') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by food cost percentage"
@@ -645,7 +645,7 @@ function Dashboard() {
                   userSelect: 'none', 
                   padding: '12px',
                   transition: 'all 0.2s ease',
-                  background: sortColumn === 'prime_cost_percent' ? '#e3f2fd' : '#f8f9fa'
+                  background: sortColumn === 'prime_cost_percent' ? 'rgba(154, 198, 54, 0.15)' : '#f8f9fa'
                 }}
                 onMouseEnter={(e) => {
                   if (sortColumn !== 'prime_cost_percent') {
@@ -656,7 +656,7 @@ function Dashboard() {
                   if (sortColumn !== 'prime_cost_percent') {
                     e.currentTarget.style.background = '#f8f9fa';
                   } else {
-                    e.currentTarget.style.background = '#e3f2fd';
+                    e.currentTarget.style.background = 'rgba(154, 198, 54, 0.15)';
                   }
                 }}
                 title="Click to sort by prime cost percentage"

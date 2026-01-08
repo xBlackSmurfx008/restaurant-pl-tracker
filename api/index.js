@@ -42,6 +42,9 @@ app.use('/api/vendors', require('../server/routes/vendors'));
 app.use('/api/ingredients', require('../server/routes/ingredients'));
 app.use('/api/menu-items', require('../server/routes/menuItems'));
 app.use('/api/sales', require('../server/routes/sales'));
+app.use('/api/expenses', require('../server/routes/expenses'));
+app.use('/api/uploads', require('../server/routes/uploads'));
+app.use('/api/mappings', require('../server/routes/mappings'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,7 +1,7 @@
 {
-  "name": "restaurant-pl-tracker",
-  "version": "1.0.0",
-  "description": "Zero-Friction Restaurant Menu Costing & P&L Tracker",
+  "name": "restaurant-accounting-system",
+  "version": "2.0.0",
+  "description": "Complete Restaurant Accounting, P&L, Expense Tracking & Tax Preparation System",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

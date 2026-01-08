@@ -51,11 +51,29 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
-// Initialize all tables
+// Initialize all tables (including new accounting tables)
 async function initializeTables() {
   let client;
   try {
     client = await pool.connect();
+    
+    // Read and execute the accounting schema
+    const fs = require('fs');
+    const path = require('path');
+    const schemaPath = path.join(__dirname, 'db-accounting-schema.sql');
+    
+    if (fs.existsSync(schemaPath)) {
+      try {
+        const accountingSchema = fs.readFileSync(schemaPath, 'utf8');
+        await client.query(accountingSchema);
+        console.log('✅ Accounting schema initialized');
+      } catch (schemaError) {
+        // Schema might already exist, that's OK
+        if (!schemaError.message.includes('already exists')) {
+          console.log('⚠️  Note: Some accounting tables may already exist');
+        }
+      }
+    }
     // Vendors table
     await client.query(`
       CREATE TABLE IF NOT EXISTS vendors (

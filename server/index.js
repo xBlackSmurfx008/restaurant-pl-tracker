@@ -20,15 +20,31 @@ app.options('*', cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes
+// Routes - Core Restaurant Operations
 app.use('/api/vendors', require('./routes/vendors'));
 app.use('/api/ingredients', require('./routes/ingredients'));
 app.use('/api/menu-items', require('./routes/menuItems'));
 app.use('/api/sales', require('./routes/sales'));
 
+// Routes - Accounting & Finance
+app.use('/api/expenses', require('./routes/expenses'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/tax', require('./routes/tax'));
+app.use('/api/payroll', require('./routes/payroll'));
+app.use('/api/accounting', require('./routes/accounting'));
+
+// Routes - Other
+app.use('/api/uploads', require('./routes/uploads'));
+app.use('/api/mappings', require('./routes/mappings'));
+
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Restaurant P&L Tracker API is running' });
+  res.json({ 
+    status: 'ok', 
+    message: 'Restaurant Accounting & P&L System API is running',
+    version: '2.0.0',
+    features: ['accounting', 'expenses', 'payroll', 'tax-prep', 'reports', 'pnl']
+  });
 });
 
 // Error handling middleware
