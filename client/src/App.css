@@ -94,6 +94,47 @@ body {
   margin-top: 2px;
 }
 
+/* Section Selector */
+.section-selector {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--flavor-charcoal);
+  border-bottom: 1px solid var(--flavor-gray);
+}
+
+.section-btn {
+  padding: 12px 32px;
+  background: var(--flavor-gray);
+  border: none;
+  border-radius: 4px;
+  color: var(--flavor-white);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.section-btn:hover {
+  background: var(--flavor-green-dark);
+}
+
+.section-btn.active {
+  background: var(--flavor-green);
+  color: var(--flavor-charcoal);
+  box-shadow: 0 2px 8px rgba(154, 198, 54, 0.3);
+}
+
+.section-btn.active-alt {
+  background: var(--flavor-green);
+  color: var(--flavor-charcoal);
+  box-shadow: 0 2px 8px rgba(154, 198, 54, 0.3);
+}
+
 /* Navigation tabs */
 .tab-navigation {
   display: flex;
@@ -608,6 +649,30 @@ body {
 
 .footer-bar a:hover {
   opacity: 0.7;
+}
+
+/* App Footer */
+.app-footer {
+  text-align: center;
+  padding: 20px 30px;
+  background: var(--flavor-charcoal);
+  border-top: 1px solid var(--flavor-gray);
+}
+
+.app-footer p {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.app-footer .footer-features {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 
 /* Responsive */

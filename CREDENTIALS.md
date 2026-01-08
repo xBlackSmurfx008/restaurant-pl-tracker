@@ -6,15 +6,15 @@
 
 ### Connection String
 ```
-postgresql://neondb_owner:npg_X6ljSUJpqZ3F@ep-odd-resonance-adwmrhks-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+postgresql://neondb_owner:npg_whlRm02UQXiq@ep-rough-boat-ahvjxaqc-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 ### Database Details
 - **Provider**: Neon PostgreSQL
-- **Host**: ep-odd-resonance-adwmrhks-pooler.c-2.us-east-1.aws.neon.tech
+- **Host**: ep-rough-boat-ahvjxaqc-pooler.c-3.us-east-1.aws.neon.tech
 - **Database**: neondb
 - **User**: neondb_owner
-- **Password**: npg_X6ljSUJpqZ3F
+- **Password**: npg_whlRm02UQXiq
 - **Region**: US East 1 (AWS)
 - **Connection Type**: Pooled (optimized for serverless)
 - **SSL**: Required
@@ -35,7 +35,7 @@ postgresql://neondb_owner:npg_X6ljSUJpqZ3F@ep-odd-resonance-adwmrhks-pooler.c-2.
 
 #### DATABASE_URL
 ```
-postgresql://neondb_owner:npg_X6ljSUJpqZ3F@ep-odd-resonance-adwmrhks-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+postgresql://neondb_owner:npg_whlRm02UQXiq@ep-rough-boat-ahvjxaqc-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 - **Environments**: Production, Preview, Development
 
@@ -99,7 +99,7 @@ The database schema is defined in:
 
 ### Connect to Database
 ```bash
-psql 'postgresql://neondb_owner:npg_X6ljSUJpqZ3F@ep-odd-resonance-adwmrhks-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+psql 'postgresql://neondb_owner:npg_whlRm02UQXiq@ep-rough-boat-ahvjxaqc-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require'
 ```
 
 ### Update Database Schema

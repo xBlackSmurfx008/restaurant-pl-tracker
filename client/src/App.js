@@ -13,27 +13,26 @@ import AccountingDashboard from './components/AccountingDashboard';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [activeSection, setActiveSection] = useState('operations'); // 'operations' or 'accounting'
+  const [activeSection, setActiveSection] = useState('operations');
 
   const operationsTabs = [
-    { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-    { id: 'sales', label: '💵 Sales', icon: '💵' },
-    { id: 'recipes', label: '🍳 Recipes', icon: '🍳' },
-    { id: 'ingredients', label: '🥬 Ingredients', icon: '🥬' },
-    { id: 'vendors', label: '🚚 Vendors', icon: '🚚' },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'sales', label: 'Sales' },
+    { id: 'recipes', label: 'Recipes' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'vendors', label: 'Vendors' },
   ];
 
   const accountingTabs = [
-    { id: 'pnl', label: '📈 P&L Report', icon: '📈' },
-    { id: 'expenses-new', label: '💰 Expenses', icon: '💰' },
-    { id: 'payroll', label: '👥 Payroll', icon: '👥' },
-    { id: 'accounting', label: '🏦 Accounting', icon: '🏦' },
-    { id: 'tax', label: '📑 Tax Prep', icon: '📑' },
+    { id: 'pnl', label: 'P&L Report' },
+    { id: 'expenses-new', label: 'Expenses' },
+    { id: 'payroll', label: 'Payroll' },
+    { id: 'accounting', label: 'Accounting' },
+    { id: 'tax', label: 'Tax Prep' },
   ];
 
   const handleSectionChange = (section) => {
     setActiveSection(section);
-    // Set default tab for each section
     if (section === 'operations') {
       setActiveTab('dashboard');
     } else {
@@ -55,51 +54,18 @@ function App() {
       </header>
 
       {/* Section Selector */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        gap: '10px', 
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
-      }}>
+      <div className="section-selector">
         <button
           onClick={() => handleSectionChange('operations')}
-          style={{
-            padding: '12px 30px',
-            background: activeSection === 'operations' 
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-              : 'rgba(255,255,255,0.1)',
-            border: 'none',
-            borderRadius: '25px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: activeSection === 'operations' ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none'
-          }}
+          className={`section-btn ${activeSection === 'operations' ? 'active' : ''}`}
         >
-          🍽️ Operations
+          Operations
         </button>
         <button
           onClick={() => handleSectionChange('accounting')}
-          style={{
-            padding: '12px 30px',
-            background: activeSection === 'accounting' 
-              ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' 
-              : 'rgba(255,255,255,0.1)',
-            border: 'none',
-            borderRadius: '25px',
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: activeSection === 'accounting' ? '0 4px 15px rgba(56, 239, 125, 0.4)' : 'none'
-          }}
+          className={`section-btn ${activeSection === 'accounting' ? 'active-alt' : ''}`}
         >
-          💼 Accounting & Tax
+          Accounting & Tax
         </button>
       </div>
 
@@ -139,17 +105,9 @@ function App() {
         )}
       </main>
 
-      <footer style={{
-        textAlign: 'center',
-        padding: '20px',
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: '0.9rem'
-      }}>
-        <p>Restaurant Accounting System v2.0 • Designed for Local-Sourcing Restaurants</p>
-        <p style={{ marginTop: '5px', fontSize: '0.8rem' }}>
-          📊 Full P&L • 💰 Expense Tracking • 📑 Tax Prep • 👥 Payroll Ready
-        </p>
+      <footer className="app-footer">
+        <p>Restaurant Accounting System v2.0</p>
+        <p className="footer-features">Full P&L | Expense Tracking | Tax Prep | Payroll</p>
       </footer>
     </div>
   );
