@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | Flavor 91 Bistro</title>
+  <link rel="icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Flavor 91 Brand Colors */
+    :root {
+      --flavor-green: #9AC636;
+      --flavor-green-dark: #7BA328;
+      --flavor-green-light: #B8D95A;
+      --flavor-charcoal: #1A1A1A;
+      --flavor-dark: #2D2D2D;
+      --flavor-gray: #3D3D3D;
+      --flavor-light-gray: #F5F5F5;
+      --flavor-white: #FFFFFF;
+      --flavor-text: #333333;
+      --flavor-text-light: #666666;
+      --success: #43A047;
+      --warning: #FFB300;
+      --danger: #E53935;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--flavor-charcoal);
+      color: var(--flavor-text);
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .header {
+      background: var(--flavor-charcoal);
+      border-bottom: 4px solid var(--flavor-green);
+      padding: 24px 40px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand img {
+      height: 50px;
+      width: auto;
+    }
+
+    .brand-text h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: var(--flavor-white);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text h1 .highlight {
+      background: var(--flavor-green);
+      color: var(--flavor-charcoal);
+      padding: 2px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .tagline {
+      font-family: 'Lato', sans-serif;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: transparent;
+      border: 2px solid var(--flavor-green);
+      color: var(--flavor-green);
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: var(--flavor-green);
+      color: var(--flavor-charcoal);
+    }
+
+    /* Navigation */
+    .nav {
+      background: var(--flavor-dark);
+      border-bottom: 1px solid var(--flavor-gray);
+      position: sticky;
+      top: 84px;
+      z-index: 99;
+    }
+
+    .nav-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0;
+    }
+
+    .nav a {
+      padding: 16px 24px;
+      color: var(--flavor-white);
+      text-decoration: none;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      transition: all 0.2s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .nav a:hover {
+      opacity: 1;
+      background: rgba(154, 198, 54, 0.1);
+    }
+
+    .nav a.active {
+      opacity: 1;
+      color: var(--flavor-green);
+      border-bottom-color: var(--flavor-green);
+      background: rgba(154, 198, 54, 0.05);
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--flavor-charcoal);
+      padding: 80px 40px;
+      text-align: center;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero h2 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--flavor-white);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero h2 span {
+      color: var(--flavor-green);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 600px;
+      margin: 0 auto 30px;
+    }
+
+    .hero-quote {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--flavor-green);
+      letter-spacing: 1px;
+      padding: 20px 40px;
+      border-left: 4px solid var(--flavor-green);
+      background: rgba(154, 198, 54, 0.08);
+      display: inline-block;
+      text-align: left;
+    }
+
+    /* Main Content */
+    main {
+      background: var(--flavor-light-gray);
+      padding: 0;
+    }
+
+    section {
+      padding: 60px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section:nth-child(even) {
+      background: var(--flavor-white);
+    }
+
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--flavor-charcoal);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid var(--flavor-green);
+      display: inline-block;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--flavor-white);
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .card h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--flavor-charcoal);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      color: var(--flavor-text-light);
+      font-size: 0.95rem;
+    }
+
+    /* Metric Card (Dark) */
+    .metric-card {
+      background: var(--flavor-charcoal);
+      color: var(--flavor-white);
+      padding: 28px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid var(--flavor-green);
+    }
+
+    .metric-card h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 8px;
+      color: var(--flavor-white);
+    }
+
+    .metric-card .value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--flavor-green);
+    }
+
+    .metric-card p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    /* Feature List */
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: var(--flavor-white);
+      border-radius: 4px;
+      border-left: 3px solid var(--flavor-green);
+    }
+
+    .feature-item .check {
+      color: var(--flavor-green);
+      font-weight: bold;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .feature-item span {
+      color: var(--flavor-text);
+      font-size: 0.95rem;
+    }
+
+    /* Matrix Section */
+    .matrix {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--flavor-gray);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 24px;
+    }
+
+    .matrix-cell {
+      padding: 28px;
+      text-align: center;
+    }
+
+    .matrix-cell h4 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .matrix-cell p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .matrix-champions {
+      background: #28a745;
+      color: white;
+    }
+
+    .matrix-gems {
+      background: #ffc107;
+      color: var(--flavor-charcoal);
+    }
+
+    .matrix-drivers {
+      background: #17a2b8;
+      color: white;
+    }
+
+    .matrix-review {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Steps */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      counter-reset: step;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 24px;
+      background: var(--flavor-white);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--flavor-charcoal);
+      background: var(--flavor-green);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--flavor-charcoal);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .step-content p {
+      color: var(--flavor-text-light);
+      font-size: 0.95rem;
+    }
+
+    /* FAQ */
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      background: var(--flavor-white);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 20px 24px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--flavor-charcoal);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: background 0.2s ease;
+    }
+
+    .faq-question:hover {
+      background: rgba(154, 198, 54, 0.08);
+    }
+
+    .faq-question .toggle {
+      font-size: 1.2rem;
+      color: var(--flavor-green);
+      font-weight: bold;
+      transition: transform 0.2s ease;
+    }
+
+    .faq-item.open .faq-question .toggle {
+      transform: rotate(45deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 200px;
+    }
+
+    .faq-answer p {
+      padding: 0 24px 20px;
+      color: var(--flavor-text-light);
+      font-size: 0.95rem;
+      border-top: 1px solid var(--flavor-light-gray);
+      padding-top: 16px;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--flavor-charcoal);
+      border-top: 4px solid var(--flavor-green);
+      padding: 40px;
+      text-align: center;
+    }
+
+    .footer h3 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--flavor-white);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .footer h3 span {
+      background: var(--flavor-green);
+      color: var(--flavor-charcoal);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .footer p {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    .footer a {
+      color: var(--flavor-green);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+
+      .brand {
+        flex-direction: column;
+      }
+
+      .nav-content {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .nav a {
+        padding: 12px 16px;
+        font-size: 0.8rem;
+      }
+
+      .hero h2 {
+        font-size: 2rem;
+      }
+
+      .matrix {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-text">
+          <h1>FLAVOR <span class="highlight">91</span></h1>
+          <div class="tagline">Where Every Bite Tells a Story</div>
+        </div>
+      </div>
+      <a href="/" class="back-btn">Back to App</a>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-content">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#operations">Operations</a>
+      <a href="#accounting">Accounting</a>
+      <a href="#start">Get Started</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="overview">
+    <div class="hero-content">
+      <h2>Your Complete <span>Restaurant Management</span> System</h2>
+      <p>Flavor 91 Bistro handles everything from recipe costing to tax preparation — all in one place.</p>
+      <div class="hero-quote">
+        "Don't make me do math."<br>
+        <small style="opacity: 0.7; font-size: 0.9rem;">— The entire philosophy of this system</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main>
+    <!-- What It Does -->
+    <section>
+      <h2 class="section-title">What This System Does</h2>
+      <div class="cards-grid">
+        <div class="card">
+          <h3>Automatic Calculations</h3>
+          <p>Unit conversions, cost calculations, profit margins — all handled automatically. You enter the numbers, the system does the math.</p>
+        </div>
+        <div class="card">
+          <h3>Real-Time Tracking</h3>
+          <p>See your profit and loss instantly. Every sale, expense, and payroll entry updates your financial picture immediately.</p>
+        </div>
+        <div class="card">
+          <h3>Menu Engineering</h3>
+          <p>Know exactly which items make money and which don't. The system categorizes your menu into Champions, Hidden Gems, Volume Drivers, and Needs Review.</p>
+        </div>
+        <div class="card">
+          <h3>Tax Ready</h3>
+          <p>All your financial data organized and ready for tax time. Export reports, track deductions, and stay organized year-round.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+      <h2 class="section-title">All Features</h2>
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Vendor management with payment tracking</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Ingredient inventory with automatic unit conversion</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Recipe builder with plate cost calculation</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Menu item profitability analysis</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Daily, weekly, monthly sales tracking</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Expense categorization for taxes</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Payroll and labor cost tracking</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Accounts payable management</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Chart of Accounts with double-entry ledger</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>P&L statements and financial reports</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Tax preparation summaries</span>
+        </div>
+        <div class="feature-item">
+          <span class="check">✓</span>
+          <span>Invoice upload and document storage</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Operations Module -->
+    <section id="operations">
+      <h2 class="section-title">Operations Module</h2>
+      <p style="margin-bottom: 24px; color: var(--flavor-text-light);">The daily operational tools for running Flavor 91.</p>
+      <div class="cards-grid">
+        <div class="card">
+          <h3>Vendors</h3>
+          <p>Track suppliers, contact info, and payment terms. See outstanding balances at a glance.</p>
+        </div>
+        <div class="card">
+          <h3>Ingredients</h3>
+          <p>Manage your inventory with automatic unit conversions. Enter prices per case, use by the ounce.</p>
+        </div>
+        <div class="card">
+          <h3>Menu Items</h3>
+          <p>Build recipes, calculate plate costs, set prices, and see profit margins for every dish.</p>
+        </div>
+        <div class="card">
+          <h3>Sales</h3>
+          <p>Record daily sales with automatic categorization. Track trends over time.</p>
+        </div>
+      </div>
+
+      <!-- Menu Engineering Matrix -->
+      <h3 style="font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin-top: 40px; margin-bottom: 16px; color: var(--flavor-charcoal); letter-spacing: 1px; text-transform: uppercase;">Menu Engineering Matrix</h3>
+      <p style="color: var(--flavor-text-light); margin-bottom: 16px;">Every menu item is automatically classified based on profitability and popularity:</p>
+      <div class="matrix">
+        <div class="matrix-cell matrix-champions">
+          <h4>Champions</h4>
+          <p>High profit, high popularity — your best performers</p>
+        </div>
+        <div class="matrix-cell matrix-gems">
+          <h4>Hidden Gems</h4>
+          <p>High profit, low popularity — market these more</p>
+        </div>
+        <div class="matrix-cell matrix-drivers">
+          <h4>Volume Drivers</h4>
+          <p>Low profit, high popularity — optimize costs</p>
+        </div>
+        <div class="matrix-cell matrix-review">
+          <h4>Needs Review</h4>
+          <p>Low profit, low popularity — consider removing</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accounting Module -->
+    <section id="accounting">
+      <h2 class="section-title">Accounting Module</h2>
+      <p style="margin-bottom: 24px; color: var(--flavor-text-light);">Complete financial tracking for Flavor 91.</p>
+      <div class="cards-grid">
+        <div class="metric-card">
+          <h3>Daily P&L</h3>
+          <div class="value">Real-Time</div>
+          <p>See profit and loss updated with every transaction</p>
+        </div>
+        <div class="metric-card">
+          <h3>Target Food Cost</h3>
+          <div class="value">&lt; 30%</div>
+          <p>Keep food costs under control for healthy margins</p>
+        </div>
+        <div class="metric-card">
+          <h3>Target Labor</h3>
+          <div class="value">&lt; 28%</div>
+          <p>Monitor labor as percentage of revenue</p>
+        </div>
+        <div class="metric-card">
+          <h3>Prime Cost Target</h3>
+          <div class="value">&lt; 60%</div>
+          <p>Food + Labor combined benchmark</p>
+        </div>
+      </div>
+
+      <div style="margin-top: 32px;">
+        <div class="cards-grid">
+          <div class="card">
+            <h3>Expenses</h3>
+            <p>Categorize all expenses by tax category. Track receipts and vendor payments.</p>
+          </div>
+          <div class="card">
+            <h3>Payroll</h3>
+            <p>Log employee hours, wages, tips, and tax withholdings. Calculate labor percentages.</p>
+          </div>
+          <div class="card">
+            <h3>Accounts Payable</h3>
+            <p>Track vendor invoices, due dates, and payment status. Never miss a payment.</p>
+          </div>
+          <div class="card">
+            <h3>Reports</h3>
+            <p>Generate P&L statements, tax summaries, and financial reports on demand.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Getting Started -->
+    <section id="start">
+      <h2 class="section-title">Getting Started</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-content">
+            <h4>Add Your Vendors</h4>
+            <p>Start by entering your food suppliers, beverage distributors, and other vendors with their contact info and payment terms.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>Enter Your Ingredients</h4>
+            <p>Add the items you purchase — the system handles unit conversions automatically. Enter by the case, use by the ounce.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>Build Your Menu</h4>
+            <p>Create recipes by selecting ingredients and quantities. The plate cost calculates automatically.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>Record Daily Sales</h4>
+            <p>Enter sales at the end of each shift. Track by category (food, beverage, dessert, etc.).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-content">
+            <h4>Track Expenses</h4>
+            <p>Log expenses as they occur. Categorize for taxes. Upload receipts if needed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            How do I calculate plate cost for a recipe?
+            <span class="toggle">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Go to Menu Items, create or edit an item, then add ingredients with quantities. The system automatically calculates the total plate cost based on your ingredient prices.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            What's the difference between Operations and Accounting?
+            <span class="toggle">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Operations handles daily restaurant tasks (vendors, ingredients, menu, sales). Accounting handles financial tracking (expenses, payroll, P&L, taxes).</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            How do unit conversions work?
+            <span class="toggle">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Enter ingredients with their purchase unit and price. The system converts between oz, lb, g, kg, ml, L, gal, and more automatically when you use them in recipes.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            Where can I see my profit margins?
+            <span class="toggle">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Menu Items shows profit per dish. The Accounting section shows overall P&L. Sales tracking shows daily/weekly/monthly revenue trends.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+            Is my data secure?
+            <span class="toggle">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. All data is stored securely with industry-standard encryption. Access is protected by authentication.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <h3>FLAVOR <span>91</span> BISTRO</h3>
+    <p style="margin-top: 8px;">Where Every Bite Tells a Story</p>
+    <p style="margin-top: 16px;">
+      <a href="https://flavor91.com" target="_blank">flavor91.com</a>
+    </p>
+  </footer>
+
+  <script>
+    // Smooth scroll for navigation
+    document.querySelectorAll('.nav a').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // Update active state
+        document.querySelectorAll('.nav a').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Update active nav on scroll
+    window.addEventListener('scroll', function() {
+      const sections = document.querySelectorAll('section[id]');
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 200;
+        if (scrollY >= sectionTop) {
+          current = section.getAttribute('id');
+        }
+      });
+      document.querySelectorAll('.nav a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -11,6 +11,11 @@ function AccountingDashboard() {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [agingReport, setAgingReport] = useState(null);
   const [settings, setSettings] = useState({});
+  
+  // Clear Data Modal
+  const [showClearDataModal, setShowClearDataModal] = useState(false);
+  const [clearDataConfirmation, setClearDataConfirmation] = useState('');
+  const [clearingData, setClearingData] = useState(false);
 
   // Forms
   const [showPayableForm, setShowPayableForm] = useState(false);
@@ -197,6 +202,27 @@ function AccountingDashboard() {
       setSettings({ ...settings, [key]: value });
     } catch (error) {
       alert('Error updating setting: ' + error.message);
+    }
+  };
+
+  // Handle Clear All Data
+  const handleClearAllData = async () => {
+    if (clearDataConfirmation !== 'DELETE ALL DATA') {
+      alert('Please type "DELETE ALL DATA" exactly to confirm.');
+      return;
+    }
+    
+    setClearingData(true);
+    try {
+      const result = await api.clearAllData();
+      alert(`Success! ${result.message}\n\nPreserved: ${result.preserved.join(', ')}`);
+      setShowClearDataModal(false);
+      setClearDataConfirmation('');
+      loadData(); // Reload to show empty state
+    } catch (error) {
+      alert('Error clearing data: ' + error.message);
+    } finally {
+      setClearingData(false);
     }
   };
 
@@ -514,65 +540,115 @@ function AccountingDashboard() {
 
   // Render Settings
   const renderSettings = () => (
-    <div className="card">
-      <h3 style={{ marginBottom: '20px' }}>Business Settings</h3>
+    <div>
+      <div className="card">
+        <h3 style={{ marginBottom: '20px' }}>Business Settings</h3>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div className="form-group">
-          <label className="form-label">Business Name</label>
-          <input
-            type="text"
-            className="form-input"
-            value={settings.business_name || ''}
-            onChange={(e) => handleSettingUpdate('business_name', e.target.value)}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="form-group">
+            <label className="form-label">Business Name</label>
+            <input
+              type="text"
+              className="form-input"
+              value={settings.business_name || ''}
+              onChange={(e) => handleSettingUpdate('business_name', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tax ID (EIN)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={settings.tax_id || ''}
+              onChange={(e) => handleSettingUpdate('tax_id', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Target Food Cost %</label>
+            <input
+              type="number"
+              className="form-input"
+              value={settings.target_food_cost_percent || '30'}
+              onChange={(e) => handleSettingUpdate('target_food_cost_percent', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Target Labor Cost %</label>
+            <input
+              type="number"
+              className="form-input"
+              value={settings.target_labor_cost_percent || '30'}
+              onChange={(e) => handleSettingUpdate('target_labor_cost_percent', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Default Hourly Wage</label>
+            <input
+              type="number"
+              step="0.01"
+              className="form-input"
+              value={settings.default_hourly_wage || '15.00'}
+              onChange={(e) => handleSettingUpdate('default_hourly_wage', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Sales Tax Rate %</label>
+            <input
+              type="number"
+              step="0.01"
+              className="form-input"
+              value={settings.sales_tax_rate || '0'}
+              onChange={(e) => handleSettingUpdate('sales_tax_rate', e.target.value)}
+            />
+          </div>
         </div>
-        <div className="form-group">
-          <label className="form-label">Tax ID (EIN)</label>
-          <input
-            type="text"
-            className="form-input"
-            value={settings.tax_id || ''}
-            onChange={(e) => handleSettingUpdate('tax_id', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Target Food Cost %</label>
-          <input
-            type="number"
-            className="form-input"
-            value={settings.target_food_cost_percent || '30'}
-            onChange={(e) => handleSettingUpdate('target_food_cost_percent', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Target Labor Cost %</label>
-          <input
-            type="number"
-            className="form-input"
-            value={settings.target_labor_cost_percent || '30'}
-            onChange={(e) => handleSettingUpdate('target_labor_cost_percent', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Default Hourly Wage</label>
-          <input
-            type="number"
-            step="0.01"
-            className="form-input"
-            value={settings.default_hourly_wage || '15.00'}
-            onChange={(e) => handleSettingUpdate('default_hourly_wage', e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Sales Tax Rate %</label>
-          <input
-            type="number"
-            step="0.01"
-            className="form-input"
-            value={settings.sales_tax_rate || '0'}
-            onChange={(e) => handleSettingUpdate('sales_tax_rate', e.target.value)}
-          />
+      </div>
+
+      {/* Danger Zone - Clear All Data */}
+      <div className="card" style={{ marginTop: '30px', border: '2px solid #dc3545' }}>
+        <h3 style={{ marginBottom: '15px', color: '#dc3545' }}>⚠️ Danger Zone</h3>
+        
+        <div style={{ 
+          background: '#fff5f5', 
+          padding: '20px', 
+          borderRadius: '8px',
+          marginBottom: '15px'
+        }}>
+          <h4 style={{ marginBottom: '10px', color: '#c82333' }}>Clear All Data</h4>
+          <p style={{ marginBottom: '15px', color: '#721c24', fontSize: '0.9rem' }}>
+            This will permanently delete all transactional data including:
+          </p>
+          <ul style={{ 
+            marginBottom: '15px', 
+            paddingLeft: '20px', 
+            color: '#721c24',
+            fontSize: '0.85rem',
+            lineHeight: '1.8'
+          }}>
+            <li>All sales records</li>
+            <li>All expenses and receipts</li>
+            <li>All employees and payroll records</li>
+            <li>All accounts payable and receivable</li>
+            <li>All bank accounts and transactions</li>
+            <li>All journal entries</li>
+            <li>All inventory movements</li>
+            <li>All POS data and labor records</li>
+          </ul>
+          <p style={{ marginBottom: '15px', color: '#155724', fontSize: '0.9rem', fontWeight: '600' }}>
+            ✓ Your menu items, ingredients, recipes, and vendors will be preserved.
+          </p>
+          <button
+            className="btn"
+            style={{ 
+              background: '#dc3545', 
+              color: 'white',
+              padding: '10px 20px',
+              fontWeight: '600'
+            }}
+            onClick={() => setShowClearDataModal(true)}
+          >
+            Clear All Data & Start Fresh
+          </button>
         </div>
       </div>
     </div>
@@ -871,6 +947,77 @@ function AccountingDashboard() {
               </button>
               <button className="btn btn-success" onClick={handlePayment}>
                 {showPaymentForm.type === 'ap' ? 'Pay' : 'Receive'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Data Confirmation Modal */}
+      {showClearDataModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div className="card" style={{ width: '500px', border: '3px solid #dc3545' }}>
+            <h3 style={{ marginBottom: '20px', color: '#dc3545' }}>
+              ⚠️ Confirm Data Deletion
+            </h3>
+            
+            <div style={{ 
+              background: '#fff5f5', 
+              padding: '15px', 
+              borderRadius: '8px',
+              marginBottom: '20px'
+            }}>
+              <p style={{ fontWeight: '600', color: '#721c24', marginBottom: '10px' }}>
+                This action cannot be undone!
+              </p>
+              <p style={{ color: '#721c24', fontSize: '0.9rem' }}>
+                All sales, expenses, payroll, accounting entries, and other transactional data will be permanently deleted. 
+                Only your menu items, ingredients, recipes, and vendors will be preserved.
+              </p>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '600' }}>
+                Type <span style={{ color: '#dc3545', fontFamily: 'monospace' }}>DELETE ALL DATA</span> to confirm:
+              </label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Type here to confirm..."
+                value={clearDataConfirmation}
+                onChange={(e) => setClearDataConfirmation(e.target.value)}
+                style={{ 
+                  border: clearDataConfirmation === 'DELETE ALL DATA' ? '2px solid #28a745' : '1px solid #ddd'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setShowClearDataModal(false);
+                  setClearDataConfirmation('');
+                }}
+                disabled={clearingData}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn"
+                style={{ 
+                  background: clearDataConfirmation === 'DELETE ALL DATA' ? '#dc3545' : '#ccc',
+                  color: 'white',
+                  cursor: clearDataConfirmation === 'DELETE ALL DATA' ? 'pointer' : 'not-allowed'
+                }}
+                onClick={handleClearAllData}
+                disabled={clearDataConfirmation !== 'DELETE ALL DATA' || clearingData}
+              >
+                {clearingData ? 'Clearing...' : 'Clear All Data'}
               </button>
             </div>
           </div>

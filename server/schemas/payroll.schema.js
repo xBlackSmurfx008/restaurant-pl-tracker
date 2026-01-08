@@ -5,7 +5,8 @@ const { z } = require('zod');
 const { dateString, id, optionalId, nonEmptyString, optionalString, money, phone, email, dateRangeSchema } = require('./common');
 
 const payTypes = ['hourly', 'salary'];
-const departments = ['kitchen', 'front', 'management', 'bar', 'delivery', 'other'];
+// Keep backward-compatible values ('front') while supporting UI's 'front_of_house' and 'maintenance'
+const departments = ['kitchen', 'front', 'front_of_house', 'management', 'maintenance', 'bar', 'delivery', 'other'];
 const paymentMethods = ['direct_deposit', 'check', 'cash'];
 
 // Employee schemas

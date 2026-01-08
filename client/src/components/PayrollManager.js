@@ -49,7 +49,7 @@ function PayrollManager() {
     { id: 'analysis', label: 'Labor Analysis' },
   ];
 
-  const departments = ['kitchen', 'front_of_house', 'management', 'maintenance'];
+  const departments = ['kitchen', 'front_of_house', 'management', 'maintenance', 'bar', 'delivery', 'other'];
   const positions = ['chef', 'line_cook', 'prep_cook', 'server', 'host', 'bartender', 'manager', 'busser', 'dishwasher'];
 
   const loadData = useCallback(async () => {

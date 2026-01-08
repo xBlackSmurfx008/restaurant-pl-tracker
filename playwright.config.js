@@ -3,15 +3,20 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  fullyParallel: false, // Run tests sequentially for visual following
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  workers: 1, // Single worker for visual testing
+  reporter: [['list'], ['html']],
+  timeout: 60000, // 60 second timeout per test
   use: {
     baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    trace: 'on',
+    screenshot: 'on',
+    video: 'on', // Record video of tests
+    launchOptions: {
+      slowMo: 300, // Slow down actions by 300ms for visibility
+    },
   },
   projects: [
     {

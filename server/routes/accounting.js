@@ -429,4 +429,124 @@ router.put('/settings', validateBody(updateSettingsSchema), asyncHandler(async (
   res.json({ updated: Object.keys(req.body).length });
 }));
 
+// ============================================
+// CLEAR ALL DATA (Reset to Fresh State)
+// Preserves: menu_items, ingredients, recipe_map, vendors,
+//            accounts (chart of accounts), expense_categories,
+//            business_settings, role_permissions
+// ============================================
+
+router.post('/clear-all-data', asyncHandler(async (req, res) => {
+  const { confirm } = req.body;
+  
+  // Require explicit confirmation
+  if (confirm !== 'CLEAR_ALL_DATA') {
+    return res.status(400).json({
+      error: 'Confirmation required',
+      message: 'To clear all data, send { "confirm": "CLEAR_ALL_DATA" } in request body'
+    });
+  }
+
+  // Use a transaction to ensure all-or-nothing
+  await db.transaction(async (client) => {
+    // Order matters due to foreign key constraints
+    // Clear in reverse dependency order
+    
+    // 1. Clear POS Integration data
+    await client.query('DELETE FROM pos_transaction_items');
+    await client.query('DELETE FROM pos_transactions');
+    await client.query('DELETE FROM pos_settlements');
+    await client.query('DELETE FROM pos_menu_mappings');
+    await client.query('DELETE FROM pos_configurations');
+    
+    // 2. Clear Labor Operations data
+    await client.query('DELETE FROM tip_pool_distributions');
+    await client.query('DELETE FROM tip_pool_sessions');
+    await client.query('DELETE FROM tip_records');
+    await client.query('DELETE FROM timeclock_entries');
+    await client.query('DELETE FROM schedules');
+    
+    // 3. Clear Authentication/Access data
+    await client.query('DELETE FROM approval_requests');
+    await client.query('DELETE FROM audit_log');
+    await client.query('DELETE FROM sessions');
+    await client.query('DELETE FROM users');
+    
+    // 4. Clear AP Automation data
+    await client.query('DELETE FROM payment_batch_items');
+    await client.query('DELETE FROM payment_batches');
+    await client.query('DELETE FROM ap_invoice_lines');
+    await client.query('DELETE FROM ap_invoices');
+    
+    // 5. Clear Inventory data (keep ingredients and vendors)
+    await client.query('DELETE FROM inventory_receipt_lines');
+    await client.query('DELETE FROM inventory_receipts');
+    await client.query('DELETE FROM inventory_movements');
+    await client.query('DELETE FROM inventory_levels');
+    await client.query('DELETE FROM purchase_order_items');
+    await client.query('DELETE FROM purchase_orders');
+    await client.query('DELETE FROM inventory_counts');
+    
+    // 6. Clear Financial/Accounting data
+    await client.query('DELETE FROM bank_transactions');
+    await client.query('DELETE FROM bank_accounts');
+    await client.query('DELETE FROM journal_entry_lines');
+    await client.query('DELETE FROM journal_entries');
+    await client.query('DELETE FROM accounts_receivable');
+    await client.query('DELETE FROM accounts_payable');
+    await client.query('DELETE FROM daily_revenue');
+    await client.query('DELETE FROM tax_deduction_summary');
+    await client.query('DELETE FROM tax_documents');
+    await client.query('DELETE FROM fiscal_periods');
+    await client.query('DELETE FROM recurring_expense_templates');
+    
+    // 7. Clear Payroll data
+    await client.query('DELETE FROM payroll_records');
+    await client.query('DELETE FROM employees');
+    
+    // 8. Clear Expense data (keep categories)
+    await client.query('DELETE FROM expense_line_items');
+    await client.query('DELETE FROM expense_documents');
+    await client.query('DELETE FROM marketing_expenses');
+    await client.query('DELETE FROM expenses');
+    
+    // 9. Clear Documents and Mappings
+    await client.query('DELETE FROM documents');
+    await client.query('DELETE FROM vendor_item_mappings');
+    
+    // 10. Clear Sales data (keep menu items)
+    await client.query('DELETE FROM sales_log');
+  });
+
+  res.json({
+    success: true,
+    message: 'All transactional data has been cleared',
+    preserved: [
+      'menu_items',
+      'ingredients', 
+      'recipe_map',
+      'vendors',
+      'accounts (chart of accounts)',
+      'expense_categories',
+      'business_settings',
+      'role_permissions'
+    ],
+    cleared: [
+      'sales_log',
+      'expenses & line items',
+      'employees & payroll',
+      'accounts_payable',
+      'accounts_receivable',
+      'bank_accounts & transactions',
+      'journal_entries',
+      'daily_revenue',
+      'inventory data',
+      'POS data',
+      'labor/timeclock data',
+      'users & sessions',
+      'documents'
+    ]
+  });
+}));
+
 module.exports = router;

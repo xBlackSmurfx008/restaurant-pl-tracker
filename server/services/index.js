@@ -7,6 +7,14 @@ const IngredientService = require('./IngredientService');
 const MenuItemService = require('./MenuItemService');
 const SalesService = require('./SalesService');
 
+// Module-based services (direct exports, no DI)
+const PostingService = require('./PostingService');
+const InventoryService = require('./InventoryService');
+const APService = require('./APService');
+const LaborService = require('./LaborService');
+const AuthService = require('./AuthService');
+const PosService = require('./PosService');
+
 /**
  * Create all services with dependencies
  * @param {Object} repositories - Repository instances
@@ -24,5 +32,12 @@ module.exports = {
   MenuItemService,
   SalesService,
   createServices,
+  // Module-based services
+  PostingService,
+  InventoryService,
+  APService,
+  LaborService,
+  AuthService,
+  PosService,
 };
 

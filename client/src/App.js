@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import VendorManagement from './components/VendorManagement';
 import IngredientLocker from './components/IngredientLocker';
@@ -10,10 +10,40 @@ import ReportsPanel from './components/ReportsPanel';
 import TaxCenter from './components/TaxCenter';
 import PayrollManager from './components/PayrollManager';
 import AccountingDashboard from './components/AccountingDashboard';
+import Login from './components/Login';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [activeSection, setActiveSection] = useState('operations');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleLogin = (userData, token) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   const operationsTabs = [
     { id: 'dashboard', label: 'Dashboard' },
@@ -50,6 +80,15 @@ function App() {
             FLAVOR <span className="brand-91">91</span> BISTRO
           </h1>
           <p className="tagline">Restaurant Accounting & Profit Management</p>
+        </div>
+        <div className="header-user">
+          <span className="user-info">
+            👤 {user?.first_name} {user?.last_name}
+            <span className="user-role">({user?.role})</span>
+          </span>
+          <button className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
 

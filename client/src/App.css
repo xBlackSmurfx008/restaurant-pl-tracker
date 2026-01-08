@@ -94,6 +94,46 @@ body {
   margin-top: 2px;
 }
 
+/* User Info & Logout */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.9rem;
+  color: var(--flavor-white);
+  opacity: 0.9;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-left: 5px;
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid var(--flavor-green);
+  color: var(--flavor-green);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: var(--flavor-green);
+  color: var(--flavor-charcoal);
+}
+
 /* Section Selector */
 .section-selector {
   display: flex;

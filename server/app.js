@@ -68,6 +68,28 @@ function createApp() {
   app.use('/api/tax', require('./routes/tax'));
   app.use('/api/payroll', require('./routes/payroll'));
   app.use('/api/accounting', require('./routes/accounting'));
+  app.use('/api/ledger', require('./routes/ledger'));
+  app.use('/api/ap', require('./routes/ap'));
+
+  // ============================================
+  // ROUTES - Inventory Management
+  // ============================================
+  app.use('/api/inventory', require('./routes/inventory'));
+
+  // ============================================
+  // ROUTES - Labor Operations
+  // ============================================
+  app.use('/api/labor', require('./routes/labor'));
+
+  // ============================================
+  // ROUTES - Authentication & Access Control
+  // ============================================
+  app.use('/api/auth', require('./routes/auth'));
+
+  // ============================================
+  // ROUTES - POS Integration
+  // ============================================
+  app.use('/api/pos', require('./routes/pos'));
 
   // ============================================
   // ROUTES - Other
@@ -82,8 +104,8 @@ function createApp() {
     res.json({
       status: 'ok',
       message: 'Restaurant Accounting & P&L System API is running',
-      version: '2.1.0',
-      features: ['accounting', 'expenses', 'payroll', 'tax-prep', 'reports', 'pnl'],
+      version: '2.6.0',
+      features: ['accounting', 'expenses', 'payroll', 'tax-prep', 'reports', 'pnl', 'gl-ledger', 'inventory', 'ap-automation', 'labor-ops', 'auth', 'pos-integration'],
       environment: process.env.NODE_ENV || 'development',
       requestId: req.id,
     });

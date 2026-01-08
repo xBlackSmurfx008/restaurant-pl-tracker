@@ -639,6 +639,22 @@ class ApiService {
   async updateBusinessSettings(settings) {
     return this.request('/accounting/settings', { method: 'PUT', body: settings });
   }
+
+  // ============================================
+  // SYSTEM ADMINISTRATION
+  // ============================================
+
+  /**
+   * Clear all transactional data while preserving core data
+   * (menu items, ingredients, recipes, vendors, chart of accounts, expense categories)
+   * @returns {Promise<object>} Result of the clear operation
+   */
+  async clearAllData() {
+    return this.request('/accounting/clear-all-data', { 
+      method: 'POST', 
+      body: { confirm: 'CLEAR_ALL_DATA' } 
+    });
+  }
 }
 
 const apiService = new ApiService();

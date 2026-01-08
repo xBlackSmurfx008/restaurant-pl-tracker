@@ -374,7 +374,321 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
 );
 
 -- ============================================
--- 15. SETTINGS & CONFIGURATIONS
+-- 14b. INVENTORY MOVEMENTS (Perpetual Inventory Ledger)
+-- ============================================
+CREATE TABLE IF NOT EXISTS inventory_movements (
+  id SERIAL PRIMARY KEY,
+  ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
+  movement_type VARCHAR(30) NOT NULL, -- 'receipt', 'usage', 'adjustment', 'waste', 'transfer_in', 'transfer_out', 'count_adjustment'
+  quantity DECIMAL(15, 6) NOT NULL,   -- Positive for in, negative for out
+  unit VARCHAR(50) NOT NULL,
+  unit_cost DECIMAL(10, 4),           -- Cost at time of movement
+  total_cost DECIMAL(12, 2),
+  reference_type VARCHAR(50),         -- 'purchase_order', 'recipe', 'count', 'manual'
+  reference_id INTEGER,               -- ID of PO, recipe usage, count, etc.
+  reason TEXT,                        -- Reason for adjustment/waste
+  performed_by VARCHAR(255),
+  movement_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 14c. INVENTORY LEVELS (Denormalized current stock)
+-- ============================================
+CREATE TABLE IF NOT EXISTS inventory_levels (
+  id SERIAL PRIMARY KEY,
+  ingredient_id INTEGER NOT NULL REFERENCES ingredients(id) UNIQUE,
+  quantity_on_hand DECIMAL(15, 6) NOT NULL DEFAULT 0,
+  unit VARCHAR(50) NOT NULL,
+  average_cost DECIMAL(10, 4) DEFAULT 0,     -- Weighted average cost
+  total_value DECIMAL(12, 2) DEFAULT 0,
+  last_received_date DATE,
+  last_used_date DATE,
+  last_count_date DATE,
+  reorder_point DECIMAL(15, 6),              -- Alert when qty falls below
+  reorder_quantity DECIMAL(15, 6),           -- Suggested reorder amount
+  par_level DECIMAL(15, 6),                  -- Target stock level
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 14d. INVENTORY RECEIPTS (Receiving against POs)
+-- ============================================
+CREATE TABLE IF NOT EXISTS inventory_receipts (
+  id SERIAL PRIMARY KEY,
+  purchase_order_id INTEGER NOT NULL REFERENCES purchase_orders(id),
+  receipt_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  received_by VARCHAR(255),
+  invoice_number VARCHAR(100),
+  invoice_total DECIMAL(12, 2),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS inventory_receipt_lines (
+  id SERIAL PRIMARY KEY,
+  receipt_id INTEGER NOT NULL REFERENCES inventory_receipts(id) ON DELETE CASCADE,
+  po_item_id INTEGER NOT NULL REFERENCES purchase_order_items(id),
+  ingredient_id INTEGER REFERENCES ingredients(id),
+  quantity_received DECIMAL(12, 4) NOT NULL,
+  unit VARCHAR(50) NOT NULL,
+  unit_cost DECIMAL(10, 4) NOT NULL,
+  total_cost DECIMAL(12, 2) NOT NULL,
+  condition VARCHAR(20) DEFAULT 'good', -- 'good', 'damaged', 'returned', 'short'
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 15. AP AUTOMATION (Invoice Inbox & Batching)
+-- ============================================
+
+-- AP Invoices - Inbox/staging area for vendor bills
+CREATE TABLE IF NOT EXISTS ap_invoices (
+  id SERIAL PRIMARY KEY,
+  vendor_id INTEGER REFERENCES vendors(id),
+  invoice_number VARCHAR(100),
+  invoice_date DATE,
+  due_date DATE,
+  terms VARCHAR(50),
+  subtotal DECIMAL(12, 2) DEFAULT 0,
+  tax DECIMAL(10, 2) DEFAULT 0,
+  shipping DECIMAL(10, 2) DEFAULT 0,
+  total DECIMAL(12, 2) DEFAULT 0,
+  document_id INTEGER REFERENCES documents(id),
+  purchase_order_id INTEGER REFERENCES purchase_orders(id),
+  extraction_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'extracted', 'manual', 'failed'
+  mapping_status VARCHAR(20) DEFAULT 'pending',    -- 'pending', 'partial', 'complete', 'manual'
+  approval_status VARCHAR(20) DEFAULT 'pending',   -- 'pending', 'approved', 'rejected', 'hold'
+  posting_status VARCHAR(20) DEFAULT 'pending',    -- 'pending', 'posted', 'failed'
+  approved_by VARCHAR(255),
+  approved_at TIMESTAMP,
+  posted_at TIMESTAMP,
+  journal_entry_id INTEGER REFERENCES journal_entries(id),
+  accounts_payable_id INTEGER REFERENCES accounts_payable(id),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AP Invoice Line Items
+CREATE TABLE IF NOT EXISTS ap_invoice_lines (
+  id SERIAL PRIMARY KEY,
+  ap_invoice_id INTEGER NOT NULL REFERENCES ap_invoices(id) ON DELETE CASCADE,
+  line_number INTEGER,
+  raw_vendor_code TEXT,
+  raw_description TEXT NOT NULL,
+  quantity DECIMAL(12, 4),
+  unit TEXT,
+  unit_price DECIMAL(12, 4),
+  line_total DECIMAL(12, 2),
+  mapped_ingredient_id INTEGER REFERENCES ingredients(id),
+  mapped_category_id INTEGER REFERENCES expense_categories(id),
+  mapped_account_id INTEGER REFERENCES accounts(id),
+  mapping_confidence DECIMAL(3, 2) DEFAULT 0,
+  mapping_source VARCHAR(20), -- 'auto', 'manual', 'suggested'
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Payment Batches
+CREATE TABLE IF NOT EXISTS payment_batches (
+  id SERIAL PRIMARY KEY,
+  batch_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  batch_number VARCHAR(50),
+  bank_account_id INTEGER REFERENCES bank_accounts(id),
+  payment_method VARCHAR(50), -- 'check', 'ach', 'wire', 'card'
+  total_amount DECIMAL(12, 2) DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'draft', -- 'draft', 'approved', 'processing', 'completed', 'cancelled'
+  approved_by VARCHAR(255),
+  approved_at TIMESTAMP,
+  processed_at TIMESTAMP,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Payment Batch Items
+CREATE TABLE IF NOT EXISTS payment_batch_items (
+  id SERIAL PRIMARY KEY,
+  batch_id INTEGER NOT NULL REFERENCES payment_batches(id) ON DELETE CASCADE,
+  accounts_payable_id INTEGER NOT NULL REFERENCES accounts_payable(id),
+  amount DECIMAL(12, 2) NOT NULL,
+  check_number VARCHAR(50),
+  reference VARCHAR(100),
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'paid', 'failed', 'voided'
+  paid_at TIMESTAMP,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 16. LABOR OPERATIONS (Scheduling, Timeclock, Tips)
+-- ============================================
+
+-- Work Schedules
+CREATE TABLE IF NOT EXISTS schedules (
+  id SERIAL PRIMARY KEY,
+  employee_id INTEGER NOT NULL REFERENCES employees(id),
+  schedule_date DATE NOT NULL,
+  shift_start TIME NOT NULL,
+  shift_end TIME NOT NULL,
+  break_minutes INTEGER DEFAULT 0,
+  position VARCHAR(100),
+  department VARCHAR(50),
+  status VARCHAR(20) DEFAULT 'scheduled', -- 'scheduled', 'confirmed', 'no_show', 'called_out'
+  notes TEXT,
+  created_by VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employee_id, schedule_date, shift_start)
+);
+
+-- Timeclock Entries
+CREATE TABLE IF NOT EXISTS timeclock_entries (
+  id SERIAL PRIMARY KEY,
+  employee_id INTEGER NOT NULL REFERENCES employees(id),
+  clock_in TIMESTAMP NOT NULL,
+  clock_out TIMESTAMP,
+  break_start TIMESTAMP,
+  break_end TIMESTAMP,
+  total_break_minutes INTEGER DEFAULT 0,
+  schedule_id INTEGER REFERENCES schedules(id),
+  department VARCHAR(50),
+  position VARCHAR(100),
+  status VARCHAR(20) DEFAULT 'active', -- 'active', 'completed', 'adjusted', 'approved'
+  adjusted_by VARCHAR(255),
+  adjusted_at TIMESTAMP,
+  adjustment_reason TEXT,
+  approved_by VARCHAR(255),
+  approved_at TIMESTAMP,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tip Records (per shift)
+CREATE TABLE IF NOT EXISTS tip_records (
+  id SERIAL PRIMARY KEY,
+  employee_id INTEGER NOT NULL REFERENCES employees(id),
+  shift_date DATE NOT NULL,
+  timeclock_entry_id INTEGER REFERENCES timeclock_entries(id),
+  cash_tips DECIMAL(10, 2) DEFAULT 0,
+  credit_tips DECIMAL(10, 2) DEFAULT 0,
+  tip_out_given DECIMAL(10, 2) DEFAULT 0,     -- Tips given to support staff
+  tip_pool_contribution DECIMAL(10, 2) DEFAULT 0, -- Contribution to pool
+  tip_pool_received DECIMAL(10, 2) DEFAULT 0,     -- Received from pool
+  total_tips DECIMAL(10, 2) DEFAULT 0,
+  hours_worked DECIMAL(5, 2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tip Pool Sessions (for pool distribution)
+CREATE TABLE IF NOT EXISTS tip_pool_sessions (
+  id SERIAL PRIMARY KEY,
+  pool_date DATE NOT NULL,
+  pool_type VARCHAR(50) NOT NULL, -- 'front_of_house', 'bar', 'kitchen', 'all_staff'
+  total_pool_amount DECIMAL(12, 2) NOT NULL,
+  distribution_method VARCHAR(50) NOT NULL, -- 'hours_worked', 'equal', 'points'
+  status VARCHAR(20) DEFAULT 'draft', -- 'draft', 'calculated', 'approved', 'distributed'
+  calculated_at TIMESTAMP,
+  approved_by VARCHAR(255),
+  approved_at TIMESTAMP,
+  distributed_at TIMESTAMP,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tip Pool Distributions
+CREATE TABLE IF NOT EXISTS tip_pool_distributions (
+  id SERIAL PRIMARY KEY,
+  pool_session_id INTEGER NOT NULL REFERENCES tip_pool_sessions(id) ON DELETE CASCADE,
+  employee_id INTEGER NOT NULL REFERENCES employees(id),
+  hours_worked DECIMAL(5, 2) DEFAULT 0,
+  points DECIMAL(5, 2) DEFAULT 0,
+  share_percentage DECIMAL(5, 4) DEFAULT 0,
+  amount DECIMAL(10, 2) NOT NULL,
+  tip_record_id INTEGER REFERENCES tip_records(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 17. AUTHENTICATION & ACCESS CONTROL
+-- ============================================
+
+-- Users
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'viewer', -- 'admin', 'manager', 'accountant', 'viewer', 'staff'
+  employee_id INTEGER REFERENCES employees(id),
+  is_active BOOLEAN DEFAULT true,
+  last_login TIMESTAMP,
+  password_changed_at TIMESTAMP,
+  failed_login_attempts INTEGER DEFAULT 0,
+  locked_until TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sessions (for token-based auth)
+CREATE TABLE IF NOT EXISTS sessions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Role Permissions
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id SERIAL PRIMARY KEY,
+  role VARCHAR(50) NOT NULL,
+  resource VARCHAR(100) NOT NULL, -- 'expenses', 'payroll', 'reports', 'accounting', etc.
+  action VARCHAR(50) NOT NULL,    -- 'create', 'read', 'update', 'delete', 'approve'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(role, resource, action)
+);
+
+-- Audit Log
+CREATE TABLE IF NOT EXISTS audit_log (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  user_email VARCHAR(255),
+  action VARCHAR(100) NOT NULL,
+  resource VARCHAR(100) NOT NULL,
+  resource_id INTEGER,
+  old_values JSONB,
+  new_values JSONB,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  request_id VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Approval Requests (for sensitive operations)
+CREATE TABLE IF NOT EXISTS approval_requests (
+  id SERIAL PRIMARY KEY,
+  request_type VARCHAR(50) NOT NULL, -- 'expense', 'journal_entry', 'payment_batch', 'period_close'
+  reference_type VARCHAR(50) NOT NULL,
+  reference_id INTEGER NOT NULL,
+  requested_by INTEGER REFERENCES users(id),
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+  approved_by INTEGER REFERENCES users(id),
+  approved_at TIMESTAMP,
+  rejection_reason TEXT,
+  notes TEXT
+);
+
+-- ============================================
+-- 18. SETTINGS & CONFIGURATIONS
 -- ============================================
 CREATE TABLE IF NOT EXISTS business_settings (
   id SERIAL PRIMARY KEY,
@@ -397,10 +711,15 @@ CREATE TABLE IF NOT EXISTS documents (
   mime_type TEXT,
   size_bytes BIGINT,
   sha256 TEXT,
-  upload_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'uploaded', 'failed'
+  upload_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'completed', 'failed'
+  uploaded_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(bucket, object_path)
 );
+
+-- Backfill for older deployments (safe if column already exists)
+ALTER TABLE documents
+  ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP;
 
 -- ============================================
 -- 18. EXPENSE DOCUMENTS (Many-to-many link)
@@ -464,6 +783,31 @@ CREATE INDEX IF NOT EXISTS idx_daily_revenue_date ON daily_revenue(date);
 CREATE INDEX IF NOT EXISTS idx_inventory_date ON inventory_counts(count_date);
 CREATE INDEX IF NOT EXISTS idx_po_vendor ON purchase_orders(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_ingredient ON inventory_movements(ingredient_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_date ON inventory_movements(movement_date);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_type ON inventory_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_inventory_receipts_po ON inventory_receipts(purchase_order_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_receipt_lines_receipt ON inventory_receipt_lines(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_ap_invoices_vendor ON ap_invoices(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_ap_invoices_approval ON ap_invoices(approval_status);
+CREATE INDEX IF NOT EXISTS idx_ap_invoices_posting ON ap_invoices(posting_status);
+CREATE INDEX IF NOT EXISTS idx_ap_invoice_lines_invoice ON ap_invoice_lines(ap_invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payment_batches_status ON payment_batches(status);
+CREATE INDEX IF NOT EXISTS idx_payment_batch_items_batch ON payment_batch_items(batch_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_employee ON schedules(employee_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_date ON schedules(schedule_date);
+CREATE INDEX IF NOT EXISTS idx_timeclock_employee ON timeclock_entries(employee_id);
+CREATE INDEX IF NOT EXISTS idx_timeclock_date ON timeclock_entries(clock_in);
+CREATE INDEX IF NOT EXISTS idx_tip_records_employee ON tip_records(employee_id);
+CREATE INDEX IF NOT EXISTS idx_tip_records_date ON tip_records(shift_date);
+CREATE INDEX IF NOT EXISTS idx_tip_pool_sessions_date ON tip_pool_sessions(pool_date);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_resource ON audit_log(resource, resource_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status);
 CREATE INDEX IF NOT EXISTS idx_documents_vendor ON documents(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(upload_status);
 CREATE INDEX IF NOT EXISTS idx_expense_line_items_expense ON expense_line_items(expense_id);
@@ -631,4 +975,145 @@ INSERT INTO business_settings (setting_key, setting_value, setting_type, descrip
 ('sales_tax_rate', '0', 'number', 'Local sales tax rate (percentage)')
 
 ON CONFLICT (setting_key) DO NOTHING;
+
+-- ============================================
+-- INSERT DEFAULT ROLE PERMISSIONS
+-- ============================================
+INSERT INTO role_permissions (role, resource, action) VALUES
+-- Admin: full access
+('admin', 'all', 'create'), ('admin', 'all', 'read'), ('admin', 'all', 'update'), ('admin', 'all', 'delete'), ('admin', 'all', 'approve'),
+
+-- Manager: most operations
+('manager', 'expenses', 'create'), ('manager', 'expenses', 'read'), ('manager', 'expenses', 'update'), ('manager', 'expenses', 'approve'),
+('manager', 'inventory', 'create'), ('manager', 'inventory', 'read'), ('manager', 'inventory', 'update'),
+('manager', 'labor', 'create'), ('manager', 'labor', 'read'), ('manager', 'labor', 'update'), ('manager', 'labor', 'approve'),
+('manager', 'reports', 'read'),
+('manager', 'vendors', 'create'), ('manager', 'vendors', 'read'), ('manager', 'vendors', 'update'),
+('manager', 'payroll', 'read'),
+
+-- Accountant: financial operations
+('accountant', 'expenses', 'create'), ('accountant', 'expenses', 'read'), ('accountant', 'expenses', 'update'), ('accountant', 'expenses', 'approve'),
+('accountant', 'accounting', 'create'), ('accountant', 'accounting', 'read'), ('accountant', 'accounting', 'update'), ('accountant', 'accounting', 'approve'),
+('accountant', 'ap', 'create'), ('accountant', 'ap', 'read'), ('accountant', 'ap', 'update'), ('accountant', 'ap', 'approve'),
+('accountant', 'ledger', 'create'), ('accountant', 'ledger', 'read'), ('accountant', 'ledger', 'update'),
+('accountant', 'reports', 'read'),
+('accountant', 'payroll', 'read'), ('accountant', 'payroll', 'create'), ('accountant', 'payroll', 'approve'),
+('accountant', 'tax', 'read'),
+
+-- Staff: limited access
+('staff', 'labor', 'read'),
+('staff', 'timeclock', 'create'), ('staff', 'timeclock', 'read'),
+
+-- Viewer: read-only
+('viewer', 'reports', 'read'),
+('viewer', 'expenses', 'read'),
+('viewer', 'inventory', 'read')
+
+ON CONFLICT (role, resource, action) DO NOTHING;
+
+-- ============================================
+-- POS INTEGRATION TABLES
+-- ============================================
+
+-- POS Configuration
+CREATE TABLE IF NOT EXISTS pos_configurations (
+  id SERIAL PRIMARY KEY,
+  provider VARCHAR(50) NOT NULL, -- 'square', 'toast', 'clover', 'revel', 'lightspeed', 'custom'
+  name VARCHAR(255) NOT NULL,
+  api_key_encrypted TEXT,
+  location_id VARCHAR(100),
+  webhook_secret TEXT,
+  last_sync_at TIMESTAMP,
+  sync_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'syncing', 'success', 'error'
+  sync_error TEXT,
+  is_active BOOLEAN DEFAULT true,
+  settings JSONB DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- POS Sales Import (normalized transactions)
+CREATE TABLE IF NOT EXISTS pos_transactions (
+  id SERIAL PRIMARY KEY,
+  pos_config_id INTEGER REFERENCES pos_configurations(id),
+  external_id VARCHAR(255) NOT NULL, -- ID from POS system
+  transaction_date TIMESTAMP NOT NULL,
+  transaction_type VARCHAR(50) NOT NULL, -- 'sale', 'refund', 'void', 'exchange'
+  subtotal DECIMAL(12, 2) NOT NULL,
+  tax_amount DECIMAL(10, 2) DEFAULT 0,
+  tip_amount DECIMAL(10, 2) DEFAULT 0,
+  discount_amount DECIMAL(10, 2) DEFAULT 0,
+  total_amount DECIMAL(12, 2) NOT NULL,
+  payment_method VARCHAR(50), -- 'cash', 'card', 'gift_card', 'split', 'other'
+  card_brand VARCHAR(50),
+  card_last_four VARCHAR(4),
+  customer_name VARCHAR(255),
+  customer_email VARCHAR(255),
+  employee_external_id VARCHAR(100),
+  employee_id INTEGER REFERENCES employees(id),
+  raw_data JSONB,
+  import_batch_id INTEGER,
+  synced_to_gl BOOLEAN DEFAULT false,
+  gl_journal_entry_id INTEGER REFERENCES journal_entries(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(pos_config_id, external_id)
+);
+
+-- POS Transaction Items
+CREATE TABLE IF NOT EXISTS pos_transaction_items (
+  id SERIAL PRIMARY KEY,
+  pos_transaction_id INTEGER NOT NULL REFERENCES pos_transactions(id) ON DELETE CASCADE,
+  external_item_id VARCHAR(255),
+  name VARCHAR(255) NOT NULL,
+  quantity DECIMAL(10, 4) NOT NULL,
+  unit_price DECIMAL(10, 4) NOT NULL,
+  total_price DECIMAL(12, 2) NOT NULL,
+  category VARCHAR(100),
+  menu_item_id INTEGER REFERENCES menu_items(id),
+  modifiers JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- POS Settlements (daily closeouts)
+CREATE TABLE IF NOT EXISTS pos_settlements (
+  id SERIAL PRIMARY KEY,
+  pos_config_id INTEGER REFERENCES pos_configurations(id),
+  external_id VARCHAR(255),
+  settlement_date DATE NOT NULL,
+  cash_sales DECIMAL(12, 2) DEFAULT 0,
+  card_sales DECIMAL(12, 2) DEFAULT 0,
+  gift_card_sales DECIMAL(12, 2) DEFAULT 0,
+  other_sales DECIMAL(12, 2) DEFAULT 0,
+  total_sales DECIMAL(12, 2) NOT NULL,
+  total_refunds DECIMAL(12, 2) DEFAULT 0,
+  total_discounts DECIMAL(12, 2) DEFAULT 0,
+  total_tips DECIMAL(12, 2) DEFAULT 0,
+  total_tax DECIMAL(12, 2) DEFAULT 0,
+  net_sales DECIMAL(12, 2) NOT NULL,
+  transaction_count INTEGER DEFAULT 0,
+  daily_revenue_id INTEGER REFERENCES daily_revenue(id),
+  is_posted BOOLEAN DEFAULT false,
+  posted_at TIMESTAMP,
+  raw_data JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(pos_config_id, settlement_date)
+);
+
+-- POS Menu Item Mappings (link internal menu items to POS product IDs)
+CREATE TABLE IF NOT EXISTS pos_menu_mappings (
+  id SERIAL PRIMARY KEY,
+  pos_config_id INTEGER NOT NULL REFERENCES pos_configurations(id) ON DELETE CASCADE,
+  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+  external_id VARCHAR(255) NOT NULL,
+  external_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(pos_config_id, menu_item_id),
+  UNIQUE(pos_config_id, external_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_pos_transactions_date ON pos_transactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_pos_transactions_config ON pos_transactions(pos_config_id);
+CREATE INDEX IF NOT EXISTS idx_pos_settlements_date ON pos_settlements(settlement_date);
+CREATE INDEX IF NOT EXISTS idx_pos_menu_mappings_config ON pos_menu_mappings(pos_config_id);
 

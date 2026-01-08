@@ -32,10 +32,10 @@ A zero-friction P&L application for restaurant owners that handles all conversio
 
 ### Menu Engineering Dashboard
 - **Quadrant Matrix Visualization:**
-  - ⭐ **Stars** (Top Right): High Profit, High Popularity - Keep!
-  - 🧩 **Puzzles** (Top Left): High Profit, Low Popularity - Reprice
-  - 🐴 **Plowhorses** (Bottom Right): Low Profit, High Popularity - Lower portion
-  - 🐕 **Dogs** (Bottom Left): Low Profit, Low Popularity - Remove
+  - **Champions** (Top Right): High Profit, High Popularity - Your best performers!
+  - **Hidden Gems** (Top Left): High Profit, Low Popularity - Market these more
+  - **Volume Drivers** (Bottom Right): Low Profit, High Popularity - Optimize costs
+  - **Needs Review** (Bottom Left): Low Profit, Low Popularity - Consider removing
 
 ### Time-Based Analytics
 - Filters: Today, This Week, This Month, This Quarter, This Year, YTD

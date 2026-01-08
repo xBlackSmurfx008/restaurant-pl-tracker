@@ -43,7 +43,11 @@ function matchesRule(rule, code, description) {
 // UNMATCHED LINE ITEMS
 // ============================================
 
-router.get('/unmatched/:expense_id', validateId, asyncHandler(async (req, res) => {
+router.get('/unmatched/:expense_id', asyncHandler(async (req, res) => {
+  const expenseId = parseInt(req.params.expense_id, 10);
+  if (!Number.isInteger(expenseId) || expenseId <= 0) {
+    return res.status(400).json({ error: 'Invalid expense_id', code: 'VALIDATION_ERROR' });
+  }
   const lineItems = await db.promisify.all(`
     SELECT eli.*, e.vendor_id
     FROM expense_line_items eli
@@ -52,7 +56,7 @@ router.get('/unmatched/:expense_id', validateId, asyncHandler(async (req, res) =
       AND eli.mapped_ingredient_id IS NULL
       AND eli.mapped_category_id IS NULL
     ORDER BY eli.line_number, eli.id
-  `, [req.params.id]);
+  `, [expenseId]);
 
   res.json(lineItems);
 }));

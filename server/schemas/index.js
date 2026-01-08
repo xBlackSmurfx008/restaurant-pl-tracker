@@ -14,5 +14,11 @@ module.exports = {
   upload: require('./upload.schema'),
   report: require('./report.schema'),
   tax: require('./tax.schema'),
+  journal: require('./journal.schema'),
+  inventory: require('./inventory.schema'),
+  ap: require('./ap.schema'),
+  labor: require('./labor.schema'),
+  auth: require('./auth.schema'),
+  pos: require('./pos.schema'),
 };
 

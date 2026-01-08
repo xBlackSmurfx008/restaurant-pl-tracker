@@ -75,6 +75,24 @@ class ServiceUnavailableError extends AppError {
 }
 
 /**
+ * Unauthorized error (401)
+ */
+class UnauthorizedError extends AppError {
+  constructor(message = 'Authentication required') {
+    super(message, 401, 'UNAUTHORIZED');
+  }
+}
+
+/**
+ * Forbidden error (403)
+ */
+class ForbiddenError extends AppError {
+  constructor(message = 'Access denied') {
+    super(message, 403, 'FORBIDDEN');
+  }
+}
+
+/**
  * Wrap async route handlers to catch errors
  * @param {Function} fn - Async route handler
  * @returns {Function} Wrapped handler
@@ -91,6 +109,8 @@ module.exports = {
   BadRequestError,
   DatabaseError,
   ServiceUnavailableError,
+  UnauthorizedError,
+  ForbiddenError,
   asyncHandler,
 };
 
