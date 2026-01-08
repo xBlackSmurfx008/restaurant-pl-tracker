@@ -48,7 +48,7 @@ function calculatePlateCost(recipeItems, qFactor = 0) {
  */
 function calculateLaborCost(prepTimeMinutes = 0, hourlyWage = null) {
   const wage = hourlyWage || parseFloat(process.env.HOURLY_WAGE || '15.00');
-  if (prepTimeMinutes <= 0) return 0;
+  if (prepTimeMinutes <= 0) {return 0;}
   return (prepTimeMinutes / 60) * wage;
 }
 

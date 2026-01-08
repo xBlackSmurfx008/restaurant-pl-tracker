@@ -1,7 +1,7 @@
 /**
  * CORS configuration
  */
-const { env, isDev } = require('./index');
+const { isDev } = require('./index');
 
 // Allowed origins
 const allowedOrigins = [

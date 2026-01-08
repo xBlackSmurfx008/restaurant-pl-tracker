@@ -540,11 +540,11 @@ function ReportsPanel() {
       </div>
 
       {/* Report Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div className="sub-tab-container">
         {reports.map(r => (
           <button
             key={r.id}
-            className={`tab-button ${activeReport === r.id ? 'active' : ''}`}
+            className={`sub-tab ${activeReport === r.id ? 'active' : ''}`}
             onClick={() => setActiveReport(r.id)}
           >
             {r.label}

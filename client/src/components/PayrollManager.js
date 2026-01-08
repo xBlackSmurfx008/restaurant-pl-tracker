@@ -527,11 +527,11 @@ function PayrollManager() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div className="sub-tab-container">
         {tabs.map(t => (
           <button
             key={t.id}
-            className={`tab-button ${activeTab === t.id ? 'active' : ''}`}
+            className={`sub-tab ${activeTab === t.id ? 'active' : ''}`}
             onClick={() => setActiveTab(t.id)}
           >
             {t.label}

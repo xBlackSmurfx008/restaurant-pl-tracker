@@ -19,18 +19,21 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  // Use existing servers - start them manually before running tests
+  // Backend: node server/index.js (port 5001)
+  // Frontend: cd client && npm start (port 3000)
   webServer: [
     {
-      command: 'npm run server',
+      command: 'node server/index.js',
       port: 5001,
       timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true, // Always reuse if running
     },
     {
       command: 'cd client && npm start',
       port: 3000,
       timeout: 120 * 1000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true, // Always reuse if running
     },
   ],
 });

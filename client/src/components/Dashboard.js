@@ -203,13 +203,13 @@ function Dashboard() {
     <div>
       <div className="card-header">
         <h2 className="card-title">Dashboard</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="sub-tab-container" style={{ marginBottom: 0 }}>
           {periods.map((p) => (
             <button
               key={p.value}
-              className={`tab-button ${period === p.value ? 'active' : ''}`}
+              className={`sub-tab ${period === p.value ? 'active' : ''}`}
               onClick={() => setPeriod(p.value)}
-              style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
             >
               {p.label}
             </button>
@@ -220,9 +220,8 @@ function Dashboard() {
       {/* Price Watch Alerts */}
       {priceAlerts.length > 0 && (
         <div
+          className="alert-box-warning"
           style={{
-            background: '#fff3cd',
-            border: '2px solid #ffc107',
             borderRadius: '8px',
             padding: '15px',
             marginBottom: '20px',

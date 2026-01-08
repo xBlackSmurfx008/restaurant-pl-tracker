@@ -2,7 +2,7 @@
  * Upload/Document validation schemas
  */
 const { z } = require('zod');
-const { id, optionalId, nonEmptyString, money } = require('./common');
+const { id, optionalId, nonEmptyString } = require('./common');
 
 const mimeTypes = [
   'application/pdf',

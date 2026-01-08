@@ -1,80 +1,67 @@
+/**
+ * Database connection and pool management
+ * Clean PostgreSQL implementation without legacy SQLite compatibility layer
+ */
 const { Pool } = require('pg');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const { database: dbConfig } = require('./config');
+const { dbLogger } = require('./utils/logger');
 
-// PostgreSQL connection pool
-// Use DATABASE_URL from Neon if available, otherwise use individual env vars
-const poolConfig = process.env.DATABASE_URL
-  ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false // Required for Neon
-      },
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-    }
-  : {
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
-      database: process.env.DB_NAME || 'restaurant_pl',
-      user: process.env.DB_USER || process.env.USER || 'postgres',
-      password: process.env.DB_PASSWORD || '',
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-    };
+// Create connection pool
+const pool = new Pool(dbConfig);
 
-const pool = new Pool(poolConfig);
-
-// Test connection
+// Connection event handlers
 pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+  dbLogger.debug('New client connected to pool');
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  // Don't exit - let the app handle it gracefully
+  dbLogger.error({ error: err.message }, 'Unexpected error on idle client');
 });
 
-// Test database connection on startup (non-blocking)
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ Database connection failed:', err.message);
-    console.error('⚠️  The server will start but API calls may fail until database is configured.');
-    console.error('📝 To fix:');
-    console.error('   1. Ensure PostgreSQL is running');
-    console.error('   2. Create database: CREATE DATABASE restaurant_pl;');
-    console.error('   3. Update .env file with correct credentials');
-    console.error('   4. Or set DB_USER and DB_PASSWORD environment variables');
-  } else {
-    console.log('✅ Database connection successful');
+/**
+ * Test database connection
+ */
+async function testConnection() {
+  try {
+    const result = await pool.query('SELECT NOW() as time');
+    dbLogger.info({ time: result.rows[0].time }, '✅ Database connection successful');
+    return true;
+  } catch (err) {
+    dbLogger.error({ error: err.message }, '❌ Database connection failed');
+    dbLogger.error('⚠️  The server will start but API calls may fail until database is configured.');
+    dbLogger.error('📝 To fix:');
+    dbLogger.error('   1. Ensure PostgreSQL is running');
+    dbLogger.error('   2. Create database: CREATE DATABASE restaurant_pl;');
+    dbLogger.error('   3. Set DATABASE_URL or individual DB_* environment variables');
+    return false;
   }
-});
+}
 
-// Initialize all tables (including new accounting tables)
+/**
+ * Initialize database tables
+ */
 async function initializeTables() {
   let client;
   try {
     client = await pool.connect();
-    
-    // Read and execute the accounting schema
-    const fs = require('fs');
-    const path = require('path');
+
+    // Read and execute the accounting schema if it exists
     const schemaPath = path.join(__dirname, 'db-accounting-schema.sql');
-    
     if (fs.existsSync(schemaPath)) {
       try {
         const accountingSchema = fs.readFileSync(schemaPath, 'utf8');
         await client.query(accountingSchema);
-        console.log('✅ Accounting schema initialized');
+        dbLogger.info('✅ Accounting schema initialized');
       } catch (schemaError) {
-        // Schema might already exist, that's OK
         if (!schemaError.message.includes('already exists')) {
-          console.log('⚠️  Note: Some accounting tables may already exist');
+          dbLogger.warn('⚠️  Note: Some accounting tables may already exist');
         }
       }
     }
-    // Vendors table
+
+    // Core tables
     await client.query(`
       CREATE TABLE IF NOT EXISTS vendors (
         id SERIAL PRIMARY KEY,
@@ -88,20 +75,6 @@ async function initializeTables() {
       )
     `);
 
-    // Add new columns if they don't exist (for existing databases)
-    await client.query(`
-      DO $$ 
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vendors' AND column_name='account_number') THEN
-          ALTER TABLE vendors ADD COLUMN account_number VARCHAR(100);
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='vendors' AND column_name='delivery_days') THEN
-          ALTER TABLE vendors ADD COLUMN delivery_days VARCHAR(255);
-        END IF;
-      END $$;
-    `);
-
-    // Ingredients table
     await client.query(`
       CREATE TABLE IF NOT EXISTS ingredients (
         id SERIAL PRIMARY KEY,
@@ -117,7 +90,6 @@ async function initializeTables() {
       )
     `);
 
-    // Menu Items table
     await client.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
         id SERIAL PRIMARY KEY,
@@ -130,17 +102,6 @@ async function initializeTables() {
       )
     `);
 
-    // Add estimated_prep_time_minutes column if it doesn't exist (for existing databases)
-    await client.query(`
-      DO $$ 
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='menu_items' AND column_name='estimated_prep_time_minutes') THEN
-          ALTER TABLE menu_items ADD COLUMN estimated_prep_time_minutes DECIMAL(10, 2) DEFAULT 0.0;
-        END IF;
-      END $$;
-    `);
-
-    // Recipe Map table (bridge between menu items and ingredients)
     await client.query(`
       CREATE TABLE IF NOT EXISTS recipe_map (
         id SERIAL PRIMARY KEY,
@@ -152,7 +113,6 @@ async function initializeTables() {
       )
     `);
 
-    // Sales Log table
     await client.query(`
       CREATE TABLE IF NOT EXISTS sales_log (
         id SERIAL PRIMARY KEY,
@@ -164,7 +124,7 @@ async function initializeTables() {
       )
     `);
 
-    // Create indexes for better performance
+    // Indexes
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_sales_log_date ON sales_log(date);
       CREATE INDEX IF NOT EXISTS idx_sales_log_menu_item ON sales_log(menu_item_id);
@@ -173,11 +133,10 @@ async function initializeTables() {
       CREATE INDEX IF NOT EXISTS idx_recipe_map_ingredient ON recipe_map(ingredient_id);
     `);
 
-    console.log('Database tables initialized');
+    dbLogger.info('✅ Database tables initialized');
   } catch (error) {
-    console.error('Error initializing tables:', error.message);
-    console.error('⚠️  Tables will be created when database connection is available');
-    // Don't throw - allow server to start even if DB is not ready
+    dbLogger.error({ error: error.message }, 'Error initializing tables');
+    dbLogger.error('⚠️  Tables will be created when database connection is available');
   } finally {
     if (client) {
       client.release();
@@ -185,155 +144,66 @@ async function initializeTables() {
   }
 }
 
-// Initialize tables on startup
-initializeTables().catch(console.error);
+/**
+ * Execute a transaction
+ * @param {Function} callback - Async function that receives the client
+ */
+async function transaction(callback) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
-// Database helper methods (promisified interface for compatibility)
-const db = {
-  promisify: {
-    get: async (sql, params = []) => {
-      const client = await pool.connect();
+// Legacy compatibility layer for existing routes
+// TODO: Remove this once all routes are migrated to use repositories
+const promisify = {
+  get: async (sql, params = []) => {
+    const result = await pool.query(sql, params);
+    return result.rows[0] || null;
+  },
+  all: async (sql, params = []) => {
+    const result = await pool.query(sql, params);
+    return result.rows;
+  },
+  run: async (sql, params = []) => {
+    const result = await pool.query(sql, params);
+    if (sql.trim().toUpperCase().startsWith('INSERT')) {
+      // Try to get the inserted ID
       try {
-        // Convert SQLite placeholders (?) to PostgreSQL ($1, $2, etc.)
-        const pgSql = convertToPostgresSQL(sql, params);
-        const result = await client.query(pgSql, params);
-        return result.rows[0] || null;
-      } finally {
-        client.release();
-      }
-    },
-    all: async (sql, params = []) => {
-      const client = await pool.connect();
-      try {
-        const pgSql = convertToPostgresSQL(sql, params);
-        const result = await client.query(pgSql, params);
-        return result.rows;
-      } finally {
-        client.release();
-      }
-    },
-    run: async (sql, params = []) => {
-      const client = await pool.connect();
-      try {
-        const pgSql = convertToPostgresSQL(sql, params);
-        const result = await client.query(pgSql, params);
-        // For INSERT, return the inserted row ID
-        if (sql.trim().toUpperCase().startsWith('INSERT')) {
-          const idResult = await client.query('SELECT LASTVAL() as id');
-          return {
-            id: parseInt(idResult.rows[0].id),
-            changes: result.rowCount || 0,
-          };
-        }
-        // For UPDATE/DELETE, return row count
+        const idResult = await pool.query('SELECT LASTVAL() as id');
         return {
-          id: null,
+          id: parseInt(idResult.rows[0].id, 10),
           changes: result.rowCount || 0,
         };
-      } finally {
-        client.release();
+      } catch {
+        return { id: null, changes: result.rowCount || 0 };
       }
-    },
-  },
-  // Direct query method for complex queries
-  query: async (sql, params = []) => {
-    const client = await pool.connect();
-    try {
-      return await client.query(sql, params);
-    } finally {
-      client.release();
     }
-  },
-  // Transaction support
-  transaction: async (callback) => {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      try {
-        const result = await callback(client);
-        await client.query('COMMIT');
-        return result;
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      }
-    } finally {
-      client.release();
-    }
+    return { id: null, changes: result.rowCount || 0 };
   },
 };
 
-// Convert SQLite SQL to PostgreSQL SQL
-function convertToPostgresSQL(sql, params) {
-  let pgSql = sql;
-  
-  // Count number of ? placeholders
-  const placeholderCount = (sql.match(/\?/g) || []).length;
-  
-  if (placeholderCount === 0) {
-    // No placeholders, just convert date functions
-    pgSql = convertDateFunctions(pgSql);
-    return pgSql;
-  }
-  
-  // Replace SQLite placeholders with PostgreSQL placeholders
-  let paramIndex = 1;
-  pgSql = pgSql.replace(/\?/g, () => {
-    const result = `$${paramIndex}`;
-    paramIndex++;
-    return result;
-  });
-  
-  // Replace SQLite-specific functions
-  pgSql = convertDateFunctions(pgSql);
-  
-  // Replace INSERT OR REPLACE with PostgreSQL UPSERT
-  pgSql = pgSql.replace(
-    /INSERT OR REPLACE INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/gi,
-    (match, table, columns, values) => {
-      // Need to handle placeholders in values too
-      let valIndex = 1;
-      const convertedValues = values.replace(/\?/g, () => `$${valIndex++}`);
-      const cols = columns.split(',').map(c => c.trim());
-      const updateCols = cols.map(col => `${col} = EXCLUDED.${col}`).join(', ');
-      return `INSERT INTO ${table} (${columns}) VALUES (${convertedValues}) ON CONFLICT DO UPDATE SET ${updateCols}`;
-    }
-  );
-  
-  return pgSql;
-}
-
-// Helper function to convert SQLite date functions to PostgreSQL
-function convertDateFunctions(sql) {
-  let converted = sql;
-  
-  converted = converted.replace(/julianday\('now'\)/gi, "EXTRACT(EPOCH FROM CURRENT_DATE) / 86400");
-  converted = converted.replace(/julianday\(([^)]+)\)/gi, (match, dateCol) => {
-    return `EXTRACT(EPOCH FROM ${dateCol}) / 86400`;
-  });
-  converted = converted.replace(/date\('now'\)/gi, 'CURRENT_DATE');
-  converted = converted.replace(/date\('now',\s*'([^']+)'\)/gi, (match, modifier) => {
-    if (modifier === 'start of month') return "DATE_TRUNC('month', CURRENT_DATE)::DATE";
-    if (modifier === 'start of year') return "DATE_TRUNC('year', CURRENT_DATE)::DATE";
-    if (modifier.startsWith('-')) {
-      const days = modifier.replace('-', '').replace(' days', '');
-      return `CURRENT_DATE - INTERVAL '${days} days'`;
-    }
-    return 'CURRENT_DATE';
-  });
-  
-  return converted;
-}
-
-// Export pool for graceful shutdown
-db.pool = pool;
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Closing database connections...');
-  await pool.end();
-  console.log('Database connections closed');
-  process.exit(0);
+// Initialize on startup
+testConnection();
+initializeTables().catch((err) => {
+  dbLogger.error({ error: err.message }, 'Failed to initialize tables');
 });
 
-module.exports = db;
+module.exports = {
+  pool,
+  query: (sql, params) => pool.query(sql, params),
+  transaction,
+  testConnection,
+  initializeTables,
+  // Legacy compatibility - to be removed
+  promisify,
+};

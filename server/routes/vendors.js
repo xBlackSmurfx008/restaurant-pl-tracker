@@ -1,88 +1,83 @@
+/**
+ * Vendor Routes - Thin controller layer
+ */
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
 
-// Get all vendors
-router.get('/', async (req, res) => {
-  try {
-    const vendors = await db.promisify.all('SELECT * FROM vendors ORDER BY name');
+const { pool } = require('../db');
+const { VendorRepository } = require('../repositories');
+const { VendorService } = require('../services');
+const { asyncHandler } = require('../utils/errors');
+const { validateBody, validateId } = require('../middleware');
+const { createVendorSchema, updateVendorSchema } = require('../schemas/vendor.schema');
+
+// Initialize service
+const vendorRepo = new VendorRepository(pool);
+const vendorService = new VendorService(vendorRepo);
+
+/**
+ * GET /api/vendors
+ * Get all vendors
+ */
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const vendors = await vendorService.getAll();
     res.json(vendors);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Get single vendor
-router.get('/:id', async (req, res) => {
-  try {
-    const vendor = await db.promisify.get('SELECT * FROM vendors WHERE id = $1', [req.params.id]);
-    if (!vendor) {
-      return res.status(404).json({ error: 'Vendor not found' });
-    }
+/**
+ * GET /api/vendors/:id
+ * Get vendor by ID
+ */
+router.get(
+  '/:id',
+  validateId,
+  asyncHandler(async (req, res) => {
+    const vendor = await vendorService.getById(req.params.id);
     res.json(vendor);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Create vendor
-router.post('/', async (req, res) => {
-  try {
-    const { name, account_number, contact_person, phone, email, delivery_days } = req.body;
-    
-    if (!name) {
-      return res.status(400).json({ error: 'Vendor name is required' });
-    }
-
-    const result = await db.promisify.run(
-      'INSERT INTO vendors (name, account_number, contact_person, phone, email, delivery_days) VALUES ($1, $2, $3, $4, $5, $6)',
-      [name, account_number || null, contact_person || null, phone || null, email || null, delivery_days || null]
-    );
-
-    const vendor = await db.promisify.get('SELECT * FROM vendors WHERE id = $1', [result.id]);
+/**
+ * POST /api/vendors
+ * Create a new vendor
+ */
+router.post(
+  '/',
+  validateBody(createVendorSchema),
+  asyncHandler(async (req, res) => {
+    const vendor = await vendorService.create(req.body);
     res.status(201).json(vendor);
-  } catch (error) {
-    if (error.message.includes('UNIQUE constraint')) {
-      return res.status(400).json({ error: 'Vendor name already exists' });
-    }
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Update vendor
-router.put('/:id', async (req, res) => {
-  try {
-    const { name, account_number, contact_person, phone, email, delivery_days } = req.body;
-    
-    await db.promisify.run(
-      'UPDATE vendors SET name = $1, account_number = $2, contact_person = $3, phone = $4, email = $5, delivery_days = $6 WHERE id = $7',
-      [name, account_number, contact_person, phone, email, delivery_days, req.params.id]
-    );
-
-    const vendor = await db.promisify.get('SELECT * FROM vendors WHERE id = $1', [req.params.id]);
-    if (!vendor) {
-      return res.status(404).json({ error: 'Vendor not found' });
-    }
+/**
+ * PUT /api/vendors/:id
+ * Update a vendor
+ */
+router.put(
+  '/:id',
+  validateId,
+  validateBody(updateVendorSchema),
+  asyncHandler(async (req, res) => {
+    const vendor = await vendorService.update(req.params.id, req.body);
     res.json(vendor);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Delete vendor
-router.delete('/:id', async (req, res) => {
-  try {
-    const result = await db.promisify.run('DELETE FROM vendors WHERE id = $1', [req.params.id]);
-    
-    if (result.changes === 0) {
-      return res.status(404).json({ error: 'Vendor not found' });
-    }
-    
-    res.json({ message: 'Vendor deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+/**
+ * DELETE /api/vendors/:id
+ * Delete a vendor
+ */
+router.delete(
+  '/:id',
+  validateId,
+  asyncHandler(async (req, res) => {
+    await vendorService.delete(req.params.id);
+    res.json({ success: true, message: 'Vendor deleted successfully' });
+  })
+);
 
 module.exports = router;
-

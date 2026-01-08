@@ -152,11 +152,11 @@ function ExpenseManager() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div className="sub-tab-container">
         {['list', 'summary', 'recurring'].map(tab => (
           <button
             key={tab}
-            className={`tab-button ${activeTab === tab ? 'active' : ''}`}
+            className={`sub-tab ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
             {tab === 'list' ? 'All Expenses' : tab === 'summary' ? 'Summary' : 'Recurring'}
@@ -175,7 +175,7 @@ function ExpenseManager() {
                 <div className="metric-value" style={{ color: type.color }}>
                   ${(parseFloat(typeData?.total_amount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
                   {typeData?.transaction_count || 0} transactions
                 </div>
               </div>

@@ -53,7 +53,7 @@ class IngredientRepository extends BaseRepository {
         (CURRENT_DATE - i.last_price_update) as days_since_update
       FROM ingredients i
       LEFT JOIN vendors v ON i.vendor_id = v.id
-      WHERE i.last_price_update < CURRENT_DATE - $1
+      WHERE i.last_price_update < CURRENT_DATE - ($1::integer * INTERVAL '1 day')
       ORDER BY days_since_update DESC
     `, [days]);
     return result.rows;

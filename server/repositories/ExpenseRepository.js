@@ -73,7 +73,7 @@ class ExpenseRepository extends BaseRepository {
       WHERE e.id = $1
     `, [id]);
 
-    if (!expense.rows[0]) return null;
+    if (!expense.rows[0]) {return null;}
 
     const lineItems = await this.query(`
       SELECT 

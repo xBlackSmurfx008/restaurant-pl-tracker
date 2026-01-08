@@ -42,7 +42,7 @@ class MenuItemRepository extends BaseRepository {
    */
   async findByIdWithRecipe(id) {
     const menuItem = await this.findById(id);
-    if (!menuItem) return null;
+    if (!menuItem) {return null;}
 
     const recipeResult = await this.query(`
       SELECT 
@@ -115,7 +115,7 @@ class MenuItemRepository extends BaseRepository {
       GROUP BY m.id, m.q_factor
     `, [id]);
     
-    if (!result.rows[0]) return 0;
+    if (!result.rows[0]) {return 0;}
     return parseFloat(result.rows[0].ingredient_cost) + parseFloat(result.rows[0].q_factor || 0);
   }
 }
