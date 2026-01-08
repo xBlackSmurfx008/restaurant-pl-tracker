@@ -134,9 +134,9 @@ function Dashboard() {
       return <span style={{ opacity: 0.3, fontSize: '0.8em' }}> ↕</span>; // Neutral indicator
     }
     return sortDirection === 'asc' ? (
-      <span style={{ color: '#9AC636', fontWeight: 'bold' }}> ↑</span>
+      <span style={{ color: '#9AC636', fontWeight: 'bold', fontSize: '0.75em' }}> ASC</span>
     ) : (
-      <span style={{ color: '#9AC636', fontWeight: 'bold' }}> ↓</span>
+      <span style={{ color: '#9AC636', fontWeight: 'bold', fontSize: '0.75em' }}> DESC</span>
     );
   };
 
@@ -171,7 +171,7 @@ function Dashboard() {
       return { 
         category: 'Volume Drivers', 
         color: '#17a2b8', 
-        icon: '📊',
+        icon: '',
         description: 'High popularity, lower profit - Great for traffic. Consider optimizing costs or portion sizes.'
       };
     } else if (isHighProfit && !isHighPopularity) {
@@ -228,7 +228,7 @@ function Dashboard() {
             marginBottom: '20px',
           }}
         >
-          <h4 style={{ marginBottom: '10px' }}>⚠️ Price Watch Alerts</h4>
+          <h4 style={{ marginBottom: '10px' }}>Price Watch Alerts</h4>
           {priceAlerts.slice(0, 3).map((alert) => (
             <div key={alert.id} style={{ marginBottom: '8px' }}>
               You haven't updated the price of <strong>{alert.name || 'Unknown'}</strong> in{' '}
@@ -287,7 +287,7 @@ function Dashboard() {
               <span style={{ color: '#ffc107', fontWeight: '600' }}>💎 Hidden Gems</span> - High Profit, Low Popularity
             </span>
             <span>
-              <span style={{ color: '#17a2b8', fontWeight: '600' }}>📊 Volume Drivers</span> - Low Profit, High Popularity
+              <span style={{ color: '#17a2b8', fontWeight: '600' }}>Volume Drivers</span> - Low Profit, High Popularity
             </span>
             <span>
               <span style={{ color: '#dc3545', fontWeight: '600' }}>🔍 Needs Review</span> - Low Profit, Low Popularity

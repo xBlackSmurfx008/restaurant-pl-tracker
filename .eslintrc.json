@@ -1,0 +1,34 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "prefer-const": "warn",
+    "no-var": "error",
+    "eqeqeq": ["warn", "always", { "null": "ignore" }],
+    "curly": ["warn", "all"],
+    "no-throw-literal": "error",
+    "prefer-promise-reject-errors": "error",
+    "no-return-await": "warn",
+    "require-await": "warn"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    "client/",
+    "*.min.js",
+    "build/",
+    "dist/"
+  ]
+}
+

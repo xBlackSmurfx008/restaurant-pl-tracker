@@ -8,7 +8,7 @@ function TaxCenter() {
   const [data, setData] = useState(null);
 
   const tabs = [
-    { id: 'schedule-c', label: 'Schedule C', icon: '📋' },
+    { id: 'schedule-c', label: 'Schedule C' },
     { id: 'quarterly', label: 'Quarterly Estimates', icon: '📆' },
     { id: '1099', label: '1099 Vendors', icon: '📄' },
     { id: 'expenses', label: 'Expense Details', icon: '🧾' },
@@ -109,7 +109,7 @@ function TaxCenter() {
     return (
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3>📋 Schedule C Preview — Tax Year {taxYear}</h3>
+          <h3>Schedule C Preview — Tax Year {taxYear}</h3>
           <button className="btn btn-primary" onClick={() => handleExport('expenses')}>
             📥 Export CSV
           </button>
@@ -122,7 +122,7 @@ function TaxCenter() {
           marginBottom: '20px',
           fontSize: '0.9rem'
         }}>
-          ⚠️ This is a preview for planning purposes only. Consult a tax professional for actual filing.
+          This is a preview for planning purposes only. Consult a tax professional for actual filing.
         </div>
 
         {/* Part I - Income */}
@@ -265,7 +265,7 @@ function TaxCenter() {
         </table>
 
         <div style={{ marginTop: '20px', padding: '15px', background: '#e3f2fd', borderRadius: '8px', fontSize: '0.9rem' }}>
-          💡 <strong>Tip:</strong> Self-employment tax is 15.3% (12.4% SS + 2.9% Medicare) on 92.35% of net earnings.
+          <strong>Tip:</strong> Self-employment tax is 15.3% (12.4% SS + 2.9% Medicare) on 92.35% of net earnings.
           You may also owe income tax on top of this.
         </div>
       </div>
@@ -337,7 +337,7 @@ function TaxCenter() {
                       borderRadius: '4px',
                       fontSize: '0.8rem'
                     }}>
-                      {v.has_w9 ? '✓ On File' : '⚠ Needed'}
+                      {v.has_w9 ? 'On File' : 'Needed'}
                     </span>
                   </td>
                 </tr>
@@ -347,7 +347,7 @@ function TaxCenter() {
         )}
 
         <div style={{ marginTop: '20px', padding: '15px', background: '#fff3cd', borderRadius: '8px', fontSize: '0.9rem' }}>
-          ⚠️ <strong>Reminder:</strong> 1099-NEC forms are due to recipients by January 31 and to the IRS by January 31.
+          <strong>Reminder:</strong> 1099-NEC forms are due to recipients by January 31 and to the IRS by January 31.
           Collect W-9 forms from vendors before making payments.
         </div>
       </div>
@@ -427,7 +427,7 @@ function TaxCenter() {
   return (
     <div>
       <div className="card-header">
-        <h2 className="card-title">🏛️ Tax Center</h2>
+        <h2 className="card-title">Tax Center</h2>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">Tax Year</label>
           <select

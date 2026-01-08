@@ -43,10 +43,10 @@ function PayrollManager() {
   });
 
   const tabs = [
-    { id: 'employees', label: 'Employees', icon: '👥' },
-    { id: 'records', label: 'Payroll Records', icon: '📋' },
-    { id: 'run', label: 'Run Payroll', icon: '💵' },
-    { id: 'analysis', label: 'Labor Analysis', icon: '📊' },
+    { id: 'employees', label: 'Employees' },
+    { id: 'records', label: 'Payroll Records' },
+    { id: 'run', label: 'Run Payroll' },
+    { id: 'analysis', label: 'Labor Analysis' },
   ];
 
   const departments = ['kitchen', 'front_of_house', 'management', 'maintenance'];
@@ -181,7 +181,7 @@ function PayrollManager() {
   const renderEmployees = () => (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3>👥 Employees ({employees.length})</h3>
+        <h3>Employees ({employees.length})</h3>
         <button className="btn btn-primary" onClick={() => { resetEmployeeForm(); setShowEmployeeForm(true); }}>
           + Add Employee
         </button>
@@ -244,7 +244,7 @@ function PayrollManager() {
   // Render Payroll Records
   const renderRecords = () => (
     <div className="card">
-      <h3 style={{ marginBottom: '20px' }}>📋 Payroll Records</h3>
+      <h3 style={{ marginBottom: '20px' }}>Payroll Records</h3>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '20px', alignItems: 'flex-end' }}>
@@ -343,7 +343,7 @@ function PayrollManager() {
   // Render Run Payroll
   const renderRunPayroll = () => (
     <div className="card">
-      <h3 style={{ marginBottom: '20px' }}>💵 Run Payroll</h3>
+      <h3 style={{ marginBottom: '20px' }}>Run Payroll</h3>
 
       {/* Pay Period */}
       <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', alignItems: 'flex-end' }}>
@@ -445,11 +445,11 @@ function PayrollManager() {
       </table>
 
       <button className="btn btn-success" onClick={handleRunPayroll} style={{ padding: '12px 30px' }}>
-        💰 Process Payroll
+        Process Payroll
       </button>
 
       <div style={{ marginTop: '20px', padding: '15px', background: '#e3f2fd', borderRadius: '8px', fontSize: '0.9rem' }}>
-        💡 Taxes are calculated automatically:<br/>
+        Taxes are calculated automatically:<br/>
         • Federal: ~12% • State: ~5% • SS: 6.2% • Medicare: 1.45%<br/>
         • Employer also pays: 6.2% SS + 1.45% Medicare + ~0.6% FUTA + ~2.7% SUTA
       </div>
@@ -459,7 +459,7 @@ function PayrollManager() {
   // Render Labor Analysis
   const renderAnalysis = () => (
     <div className="card">
-      <h3 style={{ marginBottom: '20px' }}>📊 Labor Cost Analysis</h3>
+      <h3 style={{ marginBottom: '20px' }}>Labor Cost Analysis</h3>
 
       {laborAnalysis ? (
         <>
@@ -503,7 +503,7 @@ function PayrollManager() {
             <strong>Target:</strong> Labor cost should be 25-35% of revenue for most restaurants.
             {parseFloat(laborAnalysis.labor_cost_percent) > 35 && (
               <div style={{ color: '#dc3545', marginTop: '10px' }}>
-                ⚠️ Your labor cost is above target. Consider reviewing schedules or increasing revenue.
+                Your labor cost is above target. Consider reviewing schedules or increasing revenue.
               </div>
             )}
           </div>
@@ -523,7 +523,7 @@ function PayrollManager() {
   return (
     <div>
       <div className="card-header">
-        <h2 className="card-title">👥 Payroll Manager</h2>
+        <h2 className="card-title">Payroll Manager</h2>
       </div>
 
       {/* Tabs */}

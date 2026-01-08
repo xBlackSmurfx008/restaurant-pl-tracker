@@ -16,11 +16,11 @@ function ReportsPanel() {
   const [comparePeriod, setComparePeriod] = useState('');
 
   const reports = [
-    { id: 'pnl', label: 'P&L Statement', icon: '📊' },
-    { id: 'cash-flow', label: 'Cash Flow', icon: '💵' },
+    { id: 'pnl', label: 'P&L Statement' },
+    { id: 'cash-flow', label: 'Cash Flow' },
     { id: 'daily', label: 'Daily Summary', icon: '📅' },
     { id: 'vendor', label: 'Vendor Analysis', icon: '🏪' },
-    { id: 'budget', label: 'Budget vs Actual', icon: '🎯' },
+    { id: 'budget', label: 'Budget vs Actual' },
   ];
 
   const loadReport = useCallback(async () => {
@@ -276,7 +276,7 @@ function ReportsPanel() {
         {/* Comparison */}
         {comparison && (
           <div style={{ marginTop: '25px', padding: '15px', background: '#fff3cd', borderRadius: '8px' }}>
-            <h4 style={{ marginBottom: '10px' }}>📈 vs Previous Period</h4>
+            <h4 style={{ marginBottom: '10px' }}>vs Previous Period</h4>
             <div style={{ display: 'flex', gap: '20px' }}>
               <div>Previous Revenue: {formatCurrency(comparison.revenue)}</div>
               <div style={{ color: comparison.revenue_change >= 0 ? '#28a745' : '#dc3545', fontWeight: '600' }}>
@@ -296,7 +296,7 @@ function ReportsPanel() {
 
     return (
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>💵 Cash Flow Analysis</h3>
+        <h3 style={{ marginBottom: '20px' }}>Cash Flow Analysis</h3>
         
         {/* Summary Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
@@ -463,7 +463,7 @@ function ReportsPanel() {
 
     return (
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>🎯 Budget vs Actual — {period?.month}/{period?.year}</h3>
+        <h3 style={{ marginBottom: '20px' }}>Budget vs Actual — {period?.month}/{period?.year}</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
           <div className="metric-card">
@@ -536,7 +536,7 @@ function ReportsPanel() {
   return (
     <div>
       <div className="card-header">
-        <h2 className="card-title">📊 Financial Reports</h2>
+        <h2 className="card-title">Financial Reports</h2>
       </div>
 
       {/* Report Tabs */}

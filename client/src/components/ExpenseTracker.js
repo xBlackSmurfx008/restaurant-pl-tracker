@@ -449,7 +449,7 @@ function ExpenseTracker() {
                       }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {doc.mime_type?.includes('pdf') ? '📄' : '🖼️'}
+                        {doc.mime_type?.includes('pdf') ? 'PDF' : 'IMG'}
                         {doc.original_filename}
                         <span style={{ color: '#999', fontSize: '0.8rem' }}>
                           ({Math.round((doc.size_bytes || 0) / 1024)} KB)
@@ -461,7 +461,7 @@ function ExpenseTracker() {
                           style={{ padding: '4px 10px', marginRight: '5px' }}
                           onClick={() => handleDownload(doc)}
                         >
-                          ↓
+                          Download
                         </button>
                         <button 
                           className="btn btn-danger" 
@@ -482,7 +482,7 @@ function ExpenseTracker() {
             {/* Line Items Section */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h4>📋 Line Items ({lineItems.length})</h4>
+                <h4>Line Items ({lineItems.length})</h4>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {lineItems.length > 0 && (
                     <button className="btn btn-secondary" onClick={handleApplyMappings}>
@@ -518,7 +518,7 @@ function ExpenseTracker() {
                           {item.ingredient_name || item.mapped_category_name ? (
                             <span style={{ color: '#28a745' }}>✓ {item.ingredient_name || item.mapped_category_name}</span>
                           ) : (
-                            <span style={{ color: '#ffc107' }}>⚠</span>
+                            <span style={{ color: '#ffc107' }}>!</span>
                           )}
                         </td>
                       </tr>

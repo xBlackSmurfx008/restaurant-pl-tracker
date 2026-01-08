@@ -125,8 +125,8 @@ function ExpenseManager() {
     { value: 'cogs', label: 'Cost of Goods Sold', color: '#dc3545', icon: '📦' },
     { value: 'operating', label: 'Operating Expenses', color: '#17a2b8', icon: '🏢' },
     { value: 'marketing', label: 'Marketing', color: '#ffc107', icon: '📣' },
-    { value: 'payroll', label: 'Payroll', color: '#28a745', icon: '👥' },
-    { value: 'other', label: 'Other', color: '#6c757d', icon: '📋' }
+    { value: 'payroll', label: 'Payroll', color: '#28a745' },
+    { value: 'other', label: 'Other', color: '#6c757d' }
   ];
 
   const paymentMethods = [
@@ -145,7 +145,7 @@ function ExpenseManager() {
   return (
     <div>
       <div className="card-header">
-        <h2 className="card-title">💰 Expense Manager</h2>
+        <h2 className="card-title">Expense Manager</h2>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancel' : '+ Add Expense'}
         </button>
@@ -159,7 +159,7 @@ function ExpenseManager() {
             className={`tab-button ${activeTab === tab ? 'active' : ''}`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === 'list' ? '📋 All Expenses' : tab === 'summary' ? '📊 Summary' : '🔄 Recurring'}
+            {tab === 'list' ? 'All Expenses' : tab === 'summary' ? 'Summary' : 'Recurring'}
           </button>
         ))}
       </div>
@@ -182,7 +182,7 @@ function ExpenseManager() {
             );
           })}
           <div className="metric-card">
-            <div className="metric-label">💵 Total Expenses</div>
+            <div className="metric-label">Total Expenses</div>
             <div className="metric-value" style={{ color: '#333' }}>
               ${(summary.totals?.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
@@ -387,7 +387,7 @@ function ExpenseManager() {
                       <td>{expense.description}</td>
                       <td style={{ fontWeight: '600' }}>${parseFloat(expense.amount).toFixed(2)}</td>
                       <td>{expense.payment_method?.replace('_', ' ')}</td>
-                      <td>{expense.tax_deductible ? '✅' : '❌'}</td>
+                      <td>{expense.tax_deductible ? 'Yes' : 'No'}</td>
                       <td>
                         <button
                           className="btn btn-danger"

@@ -21,11 +21,11 @@ function AccountingDashboard() {
   const [vendors, setVendors] = useState([]);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'overview', label: 'Overview' },
     { id: 'payables', label: 'Accounts Payable', icon: '📤' },
     { id: 'receivables', label: 'Accounts Receivable', icon: '📥' },
-    { id: 'bank', label: 'Bank Accounts', icon: '🏦' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'bank', label: 'Bank Accounts' },
+    { id: 'settings', label: 'Settings' },
   ];
 
   const loadData = useCallback(async () => {
@@ -232,7 +232,7 @@ function AccountingDashboard() {
       {/* AP Aging */}
       {agingReport && (
         <div className="card" style={{ marginBottom: '20px' }}>
-          <h4 style={{ marginBottom: '15px' }}>📊 AP Aging Summary</h4>
+          <h4 style={{ marginBottom: '15px' }}>AP Aging Summary</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
             <div className="metric-card" style={{ padding: '10px' }}>
               <div style={{ fontSize: '0.8rem', color: '#666' }}>Current</div>
@@ -264,7 +264,7 @@ function AccountingDashboard() {
 
       {/* Bank Accounts */}
       <div className="card">
-        <h4 style={{ marginBottom: '15px' }}>🏦 Bank Accounts</h4>
+        <h4 style={{ marginBottom: '15px' }}>Bank Accounts</h4>
         {bankAccounts.length === 0 ? (
           <p style={{ color: '#666' }}>No bank accounts configured.</p>
         ) : (
@@ -344,7 +344,7 @@ function AccountingDashboard() {
                   <td>{ap.invoice_date}</td>
                   <td style={{ color: isOverdue ? '#dc3545' : 'inherit' }}>
                     {ap.due_date}
-                    {isOverdue && ' ⚠️'}
+                    {isOverdue && ' (Overdue)'}
                   </td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(ap.amount)}</td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(ap.amount_paid)}</td>
@@ -427,7 +427,7 @@ function AccountingDashboard() {
                   <td>{ar.invoice_number || '—'}</td>
                   <td style={{ color: isOverdue ? '#f57c00' : 'inherit' }}>
                     {ar.due_date}
-                    {isOverdue && ' ⚠️'}
+                    {isOverdue && ' (Overdue)'}
                   </td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(ar.amount)}</td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(ar.amount_received)}</td>
@@ -467,7 +467,7 @@ function AccountingDashboard() {
   const renderBank = () => (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3>🏦 Bank Accounts</h3>
+        <h3>Bank Accounts</h3>
         <button className="btn btn-primary" onClick={() => setShowBankForm(true)}>
           + Add Account
         </button>
@@ -515,7 +515,7 @@ function AccountingDashboard() {
   // Render Settings
   const renderSettings = () => (
     <div className="card">
-      <h3 style={{ marginBottom: '20px' }}>⚙️ Business Settings</h3>
+      <h3 style={{ marginBottom: '20px' }}>Business Settings</h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         <div className="form-group">
@@ -585,7 +585,7 @@ function AccountingDashboard() {
   return (
     <div>
       <div className="card-header">
-        <h2 className="card-title">🏛️ Accounting</h2>
+        <h2 className="card-title">Accounting</h2>
       </div>
 
       {/* Tabs */}

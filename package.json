@@ -1,6 +1,6 @@
 {
   "name": "restaurant-accounting-system",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Complete Restaurant Accounting, P&L, Expense Tracking & Tax Preparation System",
   "main": "server/index.js",
   "scripts": {
@@ -9,7 +9,10 @@
     "client": "cd client && npm start",
     "install-all": "npm install && cd client && npm install",
     "build": "cd client && npm run build",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build",
+    "lint": "eslint server/ api/",
+    "lint:fix": "eslint server/ api/ --fix",
+    "format": "prettier --write \"server/**/*.js\" \"api/**/*.js\""
   },
   "keywords": [
     "restaurant",
@@ -21,16 +24,23 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "pino": "^8.17.2",
+    "pino-http": "^9.0.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
     "nodemon": "^3.0.1",
-    "playwright": "^1.57.0"
+    "pino-pretty": "^10.3.1",
+    "playwright": "^1.57.0",
+    "prettier": "^3.2.4"
   }
 }
