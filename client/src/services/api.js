@@ -364,59 +364,8 @@ class ApiService {
     return this.request(`/mappings/unmatched/${expenseId}`);
   }
 
-  // ============================================
-  // ACCOUNTING - EXPENSE CATEGORIES (NEW SYSTEM)
-  // ============================================
-
-  async getExpenseCategoriesGrouped() {
-    return this.request('/expenses/categories/grouped');
-  }
-
-  async createExpenseCategory(category) {
-    return this.request('/expenses/categories', { method: 'POST', body: category });
-  }
-
-  async updateExpenseCategory(id, category) {
-    return this.request(`/expenses/categories/${id}`, { method: 'PUT', body: category });
-  }
-
-  async getExpenseSummaryByType(filters = {}) {
-    const params = new URLSearchParams();
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    if (filters.group_by) params.append('group_by', filters.group_by);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request(`/expenses/summary${query}`);
-  }
-
-  // Marketing expenses
-  async getMarketingSummary(startDate, endDate) {
-    const params = new URLSearchParams();
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request(`/expenses/marketing-summary${query}`);
-  }
-
-  async addMarketingDetails(expenseId, details) {
-    return this.request('/expenses/marketing', { 
-      method: 'POST', 
-      body: { expense_id: expenseId, ...details } 
-    });
-  }
-
-  // Recurring expenses
-  async getRecurringExpenses() {
-    return this.request('/expenses/recurring');
-  }
-
-  async createRecurringExpense(template) {
-    return this.request('/expenses/recurring', { method: 'POST', body: template });
-  }
-
-  async generateRecurringExpenses() {
-    return this.request('/expenses/recurring/generate', { method: 'POST' });
-  }
+  // NOTE: Marketing and recurring expense routes were simplified
+  // Use getExpenseCategories() and getExpenseSummary() for category/summary data
 
   // ============================================
   // REPORTS - P&L AND FINANCIAL
@@ -487,7 +436,7 @@ class ApiService {
 
   async exportTaxData(year, type) {
     // This returns CSV, handle differently
-    const url = `${this.baseUrl}/tax/export/${year}/${type}`;
+    const url = `${API_BASE_URL}/tax/export/${year}/${type}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Export failed');
     return response.blob();

@@ -6,9 +6,10 @@ import RecipeBuilder from './components/RecipeBuilder';
 import SalesInput from './components/SalesInput';
 import Dashboard from './components/Dashboard';
 import ExpenseTracker from './components/ExpenseTracker';
-import ExpenseManager from './components/ExpenseManager';
-import ProfitLossReport from './components/ProfitLossReport';
-import TaxPrep from './components/TaxPrep';
+import ReportsPanel from './components/ReportsPanel';
+import TaxCenter from './components/TaxCenter';
+import PayrollManager from './components/PayrollManager';
+import AccountingDashboard from './components/AccountingDashboard';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -25,7 +26,8 @@ function App() {
   const accountingTabs = [
     { id: 'pnl', label: '📈 P&L Report', icon: '📈' },
     { id: 'expenses-new', label: '💰 Expenses', icon: '💰' },
-    { id: 'expenses-old', label: '📋 Expense Tracker', icon: '📋' },
+    { id: 'payroll', label: '👥 Payroll', icon: '👥' },
+    { id: 'accounting', label: '🏦 Accounting', icon: '🏦' },
     { id: 'tax', label: '📑 Tax Prep', icon: '📑' },
   ];
 
@@ -128,10 +130,11 @@ function App() {
         {/* Accounting Section */}
         {activeSection === 'accounting' && (
           <>
-            {activeTab === 'pnl' && <ProfitLossReport />}
-            {activeTab === 'expenses-new' && <ExpenseManager />}
-            {activeTab === 'expenses-old' && <ExpenseTracker />}
-            {activeTab === 'tax' && <TaxPrep />}
+            {activeTab === 'pnl' && <ReportsPanel />}
+            {activeTab === 'expenses-new' && <ExpenseTracker />}
+            {activeTab === 'payroll' && <PayrollManager />}
+            {activeTab === 'accounting' && <AccountingDashboard />}
+            {activeTab === 'tax' && <TaxCenter />}
           </>
         )}
       </main>

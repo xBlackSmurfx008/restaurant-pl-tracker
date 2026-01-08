@@ -6,6 +6,38 @@ const db = require('../db');
 // VENDOR ITEM MAPPINGS ("Teach codes" system)
 // ============================================
 
+// ============================================
+// STATIC ROUTES FIRST (before /:id)
+// ============================================
+
+/**
+ * GET /api/mappings/unmatched/:expense_id
+ * Get line items from an expense that have no mappings
+ */
+router.get('/unmatched/:expense_id', async (req, res) => {
+  try {
+    const lineItems = await db.promisify.all(`
+      SELECT eli.*, e.vendor_id, v.name as vendor_name
+      FROM expense_line_items eli
+      JOIN expenses e ON eli.expense_id = e.id
+      LEFT JOIN vendors v ON e.vendor_id = v.id
+      WHERE eli.expense_id = $1
+        AND eli.mapped_ingredient_id IS NULL
+        AND eli.mapped_category_id IS NULL
+      ORDER BY eli.line_number, eli.id
+    `, [req.params.expense_id]);
+
+    res.json(lineItems);
+  } catch (error) {
+    console.error('Get unmatched error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// CRUD ROUTES
+// ============================================
+
 /**
  * GET /api/mappings
  * List all mappings (optionally filtered by vendor)
@@ -368,30 +400,6 @@ router.post('/test', (req, res) => {
     res.json({ matches });
   } catch (error) {
     console.error('Test mapping error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * GET /api/mappings/unmatched/:expense_id
- * Get line items from an expense that have no mappings
- */
-router.get('/unmatched/:expense_id', async (req, res) => {
-  try {
-    const lineItems = await db.promisify.all(`
-      SELECT eli.*, e.vendor_id, v.name as vendor_name
-      FROM expense_line_items eli
-      JOIN expenses e ON eli.expense_id = e.id
-      LEFT JOIN vendors v ON e.vendor_id = v.id
-      WHERE eli.expense_id = $1
-        AND eli.mapped_ingredient_id IS NULL
-        AND eli.mapped_category_id IS NULL
-      ORDER BY eli.line_number, eli.id
-    `, [req.params.expense_id]);
-
-    res.json(lineItems);
-  } catch (error) {
-    console.error('Get unmatched error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -292,7 +292,7 @@ function IngredientLocker() {
                   required
                 />
                 {suggestedConversion && (
-                  <small style={{ color: '#28a745', display: 'block', marginTop: '5px' }}>
+                  <small className="helper-text-success">
                     Suggested: {suggestedConversion.toFixed(4)}
                   </small>
                 )}

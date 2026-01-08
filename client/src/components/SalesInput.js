@@ -153,7 +153,6 @@ function SalesInput() {
           <button
             className="btn btn-primary"
             onClick={openAddModal}
-            style={{ backgroundColor: '#28a745', borderColor: '#28a745' }}
           >
             + Add Sales
           </button>
@@ -165,7 +164,7 @@ function SalesInput() {
             {saving ? 'Saving...' : 'Save All Sales'}
           </button>
           {lastSaved && (
-            <span style={{ fontSize: '0.9rem', color: '#28a745' }}>
+            <span className="saved-indicator">
               Saved at {lastSaved}
             </span>
           )}
@@ -176,13 +175,13 @@ function SalesInput() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
           <div>
             <strong>Total Revenue:</strong>
-            <div style={{ fontSize: '1.5rem', color: '#667eea', fontWeight: '600', marginTop: '5px' }}>
+            <div className="brand-value">
               ${calculateDailyTotal().toFixed(2)}
             </div>
           </div>
           <div>
             <strong>Total Items Sold:</strong>
-            <div style={{ fontSize: '1.5rem', color: '#667eea', fontWeight: '600', marginTop: '5px' }}>
+            <div className="brand-value">
               {Object.values(sales).reduce((sum, qty) => sum + (qty || 0), 0)}
             </div>
           </div>
@@ -256,9 +255,9 @@ function SalesInput() {
         </div>
       )}
 
-      <div className="card" style={{ marginTop: '20px', backgroundColor: '#f8f9fa' }}>
-        <h4 style={{ marginBottom: '10px' }}>Quick Tips</h4>
-        <ul style={{ margin: 0, paddingLeft: '20px', color: '#666' }}>
+      <div className="tips-card" style={{ marginTop: '20px' }}>
+        <h4>Quick Tips</h4>
+        <ul>
           <li>Click "Add Sales" to quickly add individual sales throughout the day</li>
           <li>Use Tab or Enter to quickly move between fields in the table</li>
           <li>Press Enter on the last item to save automatically</li>
@@ -347,7 +346,6 @@ function SalesInput() {
                   type="submit" 
                   className="btn btn-primary"
                   disabled={adding}
-                  style={{ backgroundColor: '#28a745', borderColor: '#28a745' }}
                 >
                   {adding ? 'Adding...' : 'Add Sales'}
                 </button>

@@ -675,3 +675,247 @@ body {
   background: var(--flavor-green);
   color: var(--flavor-charcoal);
 }
+
+/* ==============================================
+   FLAVOR 91 BRAND UTILITY CLASSES
+   Use these instead of inline styles!
+   ============================================== */
+
+/* Text Colors */
+.text-primary { color: var(--flavor-green) !important; }
+.text-dark { color: var(--flavor-charcoal) !important; }
+.text-muted { color: var(--flavor-text-light) !important; }
+.text-white { color: var(--flavor-white) !important; }
+.text-success { color: var(--success) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-danger { color: var(--danger) !important; }
+
+/* Background Colors */
+.bg-primary { background-color: var(--flavor-green) !important; color: var(--flavor-charcoal) !important; }
+.bg-dark { background-color: var(--flavor-charcoal) !important; color: var(--flavor-white) !important; }
+.bg-light { background-color: var(--flavor-light-gray) !important; }
+.bg-white { background-color: var(--flavor-white) !important; }
+
+/* Brand Accent Value - Use for displaying important numbers */
+.brand-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--flavor-green);
+}
+
+.brand-value-lg {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--flavor-green);
+}
+
+/* Selected/Active Item Card */
+.item-card {
+  padding: 15px;
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: var(--flavor-white);
+  transition: all 0.2s ease;
+}
+
+.item-card:hover {
+  border-color: var(--flavor-green);
+  background-color: rgba(154, 198, 54, 0.05);
+}
+
+.item-card.selected {
+  border: 2px solid var(--flavor-green);
+  background-color: rgba(154, 198, 54, 0.08);
+}
+
+/* Sort Indicator */
+.sort-indicator {
+  color: var(--flavor-green);
+  font-weight: bold;
+}
+
+.sort-indicator-neutral {
+  opacity: 0.3;
+  font-size: 0.8em;
+}
+
+/* Helper text */
+.helper-text {
+  color: var(--flavor-text-light);
+  display: block;
+  margin-top: 5px;
+  font-size: 0.875rem;
+}
+
+.helper-text-success {
+  color: var(--flavor-green);
+  display: block;
+  margin-top: 5px;
+}
+
+/* Sortable table header */
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.th-sortable:hover {
+  background: var(--flavor-dark) !important;
+  color: var(--flavor-green) !important;
+}
+
+.th-sortable.sorted {
+  background: rgba(154, 198, 54, 0.15) !important;
+}
+
+/* Tips/Info Card */
+.tips-card {
+  background-color: var(--flavor-light-gray);
+  border-left: 4px solid var(--flavor-green);
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.tips-card h4 {
+  font-family: 'Oswald', sans-serif;
+  color: var(--flavor-charcoal);
+  margin-bottom: 10px;
+}
+
+.tips-card ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--flavor-text-light);
+}
+
+/* Alert/Warning Box */
+.alert-box {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.alert-box-warning {
+  background: #fff3cd;
+  border: 2px solid var(--warning);
+}
+
+.alert-box-danger {
+  background: #f8d7da;
+  border: 2px solid var(--danger);
+}
+
+.alert-box-success {
+  background: #d4edda;
+  border: 2px solid var(--success);
+}
+
+.alert-box-info {
+  background: rgba(154, 198, 54, 0.1);
+  border: 2px solid var(--flavor-green);
+}
+
+/* Summary Card (light background with stats) */
+.summary-card {
+  background: var(--flavor-white);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.summary-card .summary-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  color: var(--flavor-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-card .summary-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--flavor-green);
+  margin-top: 5px;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-badge-success {
+  background: var(--success);
+  color: white;
+}
+
+.status-badge-warning {
+  background: var(--warning);
+  color: var(--flavor-charcoal);
+}
+
+.status-badge-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.status-badge-primary {
+  background: var(--flavor-green);
+  color: var(--flavor-charcoal);
+}
+
+/* Flex utilities */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.flex-gap-sm { gap: 8px; }
+.flex-gap-md { gap: 16px; }
+.flex-gap-lg { gap: 24px; }
+
+/* Grid layout for stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+/* Modal form padding */
+.modal-form {
+  padding: 24px;
+}
+
+/* Saved indicator */
+.saved-indicator {
+  font-size: 0.9rem;
+  color: var(--flavor-green);
+  font-weight: 500;
+}
+
+/* Dynamic value colors - use these for profit/loss display */
+.value-positive { color: var(--success) !important; }
+.value-negative { color: var(--danger) !important; }
+.value-neutral { color: var(--flavor-text-light) !important; }
+
+/* Inline style override helpers for legacy code */
+/* These should be migrated to proper classes over time */

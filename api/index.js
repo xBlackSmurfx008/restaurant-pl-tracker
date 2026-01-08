@@ -37,12 +37,20 @@ app.options('*', cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes
+// Routes - Core Restaurant Operations
 app.use('/api/vendors', require('../server/routes/vendors'));
 app.use('/api/ingredients', require('../server/routes/ingredients'));
 app.use('/api/menu-items', require('../server/routes/menuItems'));
 app.use('/api/sales', require('../server/routes/sales'));
+
+// Routes - Accounting & Finance
 app.use('/api/expenses', require('../server/routes/expenses'));
+app.use('/api/reports', require('../server/routes/reports'));
+app.use('/api/tax', require('../server/routes/tax'));
+app.use('/api/payroll', require('../server/routes/payroll'));
+app.use('/api/accounting', require('../server/routes/accounting'));
+
+// Routes - Other
 app.use('/api/uploads', require('../server/routes/uploads'));
 app.use('/api/mappings', require('../server/routes/mappings'));
 
@@ -50,7 +58,9 @@ app.use('/api/mappings', require('../server/routes/mappings'));
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'Restaurant P&L Tracker API is running',
+    message: 'Restaurant Accounting & P&L System API is running',
+    version: '2.0.0',
+    features: ['accounting', 'expenses', 'payroll', 'tax-prep', 'reports', 'pnl'],
     environment: process.env.NODE_ENV || 'development'
   });
 });

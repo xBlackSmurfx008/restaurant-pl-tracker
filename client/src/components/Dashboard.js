@@ -698,7 +698,7 @@ function Dashboard() {
                     <td>${cogs.toFixed(2)}</td>
                     <td>${laborCogs.toFixed(2)}</td>
                     <td>${totalCogs.toFixed(2)}</td>
-                    <td style={{ fontWeight: '600', color: netProfit >= 0 ? '#28a745' : '#dc3545' }}>
+                    <td style={{ fontWeight: '600' }} className={netProfit >= 0 ? 'value-positive' : 'value-negative'}>
                       ${netProfit.toFixed(2)}
                     </td>
                     <td>{(item.food_cost_percent !== undefined && item.food_cost_percent !== null) ? item.food_cost_percent : 0}%</td>

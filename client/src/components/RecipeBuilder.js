@@ -169,15 +169,7 @@ function RecipeBuilder() {
                 <div
                   key={item.id}
                   onClick={() => handleSelectMenuItem(item.id)}
-                  style={{
-                    padding: '15px',
-                    marginBottom: '10px',
-                    border: selectedMenuItem?.id === item.id ? '2px solid #667eea' : '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    backgroundColor: selectedMenuItem?.id === item.id ? '#f0f4ff' : 'white',
-                    transition: 'all 0.2s ease',
-                  }}
+                  className={`item-card ${selectedMenuItem?.id === item.id ? 'selected' : ''}`}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                     <div style={{ flex: 1 }}>
