@@ -280,7 +280,7 @@ function TaxCenter() {
     return (
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3>📄 1099 Vendor Report — {taxYear}</h3>
+          <h3>1099 Vendor Report — {taxYear}</h3>
           <button className="btn btn-primary" onClick={() => handleExport('1099-vendors')}>
             📥 Export CSV
           </button>

@@ -705,17 +705,25 @@ CREATE TABLE IF NOT EXISTS business_settings (
 CREATE TABLE IF NOT EXISTS documents (
   id SERIAL PRIMARY KEY,
   vendor_id INTEGER REFERENCES vendors(id) ON DELETE SET NULL,
-  bucket TEXT NOT NULL,
-  object_path TEXT NOT NULL,
+  bucket TEXT DEFAULT 'local',
+  object_path TEXT,
   original_filename TEXT,
   mime_type TEXT,
   size_bytes BIGINT,
   sha256 TEXT,
+  file_data TEXT, -- Base64 encoded file content (for PostgreSQL storage)
   upload_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'completed', 'failed'
   uploaded_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(bucket, object_path)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add file_data column if it doesn't exist (for existing databases)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'documents' AND column_name = 'file_data') THEN
+    ALTER TABLE documents ADD COLUMN file_data TEXT;
+  END IF;
+END $$;
 
 -- Backfill for older deployments (safe if column already exists)
 ALTER TABLE documents

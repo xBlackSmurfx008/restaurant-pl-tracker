@@ -1,19 +1,22 @@
 /**
  * Upload/Document Routes
- * Updated with centralized error handling and validation
+ * Supports both PostgreSQL storage (default) and Supabase storage (optional)
  */
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const db = require('../db');
 const supabase = require('../utils/supabase');
-const { asyncHandler, NotFoundError, BadRequestError, ServiceUnavailableError } = require('../utils/errors');
+const { asyncHandler, NotFoundError, BadRequestError } = require('../utils/errors');
 const { validateBody, validateId } = require('../middleware');
 const {
   createUploadSchema,
   completeUploadSchema,
   attachDocumentSchema,
 } = require('../schemas/upload.schema');
+
+// Check if we should use Supabase or PostgreSQL for storage
+const useSupabase = supabase.isConfigured();
 
 /**
  * Generate unique object path for storage
@@ -31,38 +34,99 @@ function generateObjectPath(originalFilename) {
 
 /**
  * POST /api/uploads/create
- * Create signed upload URL
+ * Create upload record (and signed URL if using Supabase)
  */
 router.post('/create', validateBody(createUploadSchema), asyncHandler(async (req, res) => {
-  if (!supabase.isConfigured()) {
-    throw new ServiceUnavailableError('File uploads are not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
-  }
-
   const { original_filename, mime_type, vendor_id } = req.body;
   const objectPath = generateObjectPath(original_filename);
-  const bucket = supabase.getBucket();
 
-  // Create document record
-  const result = await db.promisify.run(`
-    INSERT INTO documents (vendor_id, bucket, object_path, original_filename, mime_type, upload_status)
-    VALUES ($1, $2, $3, $4, $5, 'pending')
-  `, [vendor_id, bucket, objectPath, original_filename, mime_type]);
+  if (useSupabase) {
+    // Supabase storage path
+    const bucket = supabase.getBucket();
+    const result = await db.promisify.run(`
+      INSERT INTO documents (vendor_id, bucket, object_path, original_filename, mime_type, upload_status)
+      VALUES ($1, $2, $3, $4, $5, 'pending')
+    `, [vendor_id, bucket, objectPath, original_filename, mime_type]);
 
-  // Create signed upload URL
-  const signedData = await supabase.createSignedUploadUrl(objectPath);
+    const signedData = await supabase.createSignedUploadUrl(objectPath);
 
-  res.status(201).json({
-    document_id: result.id,
-    upload_url: signedData.signedUrl,
-    token: signedData.token,
-    path: signedData.path,
-    object_path: objectPath
+    res.status(201).json({
+      document_id: result.id,
+      upload_url: signedData.signedUrl,
+      token: signedData.token,
+      path: signedData.path,
+      object_path: objectPath,
+      storage_type: 'supabase'
+    });
+  } else {
+    // PostgreSQL storage path - return endpoint for direct upload
+    const result = await db.promisify.run(`
+      INSERT INTO documents (vendor_id, bucket, object_path, original_filename, mime_type, upload_status)
+      VALUES ($1, 'local', $2, $3, $4, 'pending')
+    `, [vendor_id, objectPath, original_filename, mime_type]);
+
+    res.status(201).json({
+      document_id: result.id,
+      upload_url: `/api/uploads/data/${result.id}`,
+      object_path: objectPath,
+      storage_type: 'database'
+    });
+  }
+}));
+
+/**
+ * PUT /api/uploads/data/:id
+ * Upload file data directly to PostgreSQL (for database storage mode)
+ */
+router.put('/data/:id', validateId, asyncHandler(async (req, res) => {
+  const documentId = req.params.id;
+  
+  // Get document record
+  const document = await db.promisify.get('SELECT * FROM documents WHERE id = $1', [documentId]);
+  if (!document) {
+    throw new NotFoundError('Document');
+  }
+  
+  if (document.upload_status === 'completed') {
+    throw new BadRequestError('Document already uploaded');
+  }
+
+  // Get the raw body as buffer
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  const fileBuffer = Buffer.concat(chunks);
+  
+  // Convert to base64 for storage
+  const base64Data = fileBuffer.toString('base64');
+  const sizeBytes = fileBuffer.length;
+  
+  // Calculate SHA256
+  const sha256 = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+  // Store in database
+  await db.promisify.run(`
+    UPDATE documents SET 
+      file_data = $1,
+      size_bytes = $2,
+      sha256 = $3,
+      upload_status = 'completed',
+      uploaded_at = CURRENT_TIMESTAMP
+    WHERE id = $4
+  `, [base64Data, sizeBytes, sha256, documentId]);
+
+  res.json({
+    success: true,
+    document_id: documentId,
+    size_bytes: sizeBytes,
+    sha256
   });
 }));
 
 /**
  * POST /api/uploads/complete
- * Mark upload as complete
+ * Mark upload as complete (for Supabase uploads)
  */
 router.post('/complete', validateBody(completeUploadSchema), asyncHandler(async (req, res) => {
   const { document_id, expense_id, size_bytes, sha256 } = req.body;
@@ -135,19 +199,61 @@ router.get('/download/:id', validateId, asyncHandler(async (req, res) => {
     throw new BadRequestError('Document upload is not complete');
   }
 
-  if (!supabase.isConfigured()) {
-    throw new ServiceUnavailableError('File downloads are not configured');
+  // Check if stored in database or Supabase
+  if (document.file_data) {
+    // Serve from database - return data URL
+    const dataUrl = `data:${document.mime_type};base64,${document.file_data}`;
+    
+    res.json({
+      document_id: document.id,
+      original_filename: document.original_filename,
+      mime_type: document.mime_type,
+      size_bytes: document.size_bytes,
+      download_url: dataUrl,
+      storage_type: 'database'
+    });
+  } else if (useSupabase) {
+    // Serve from Supabase
+    const signedUrl = await supabase.createSignedDownloadUrl(document.object_path);
+
+    res.json({
+      document_id: document.id,
+      original_filename: document.original_filename,
+      mime_type: document.mime_type,
+      download_url: signedUrl,
+      expires_in: 3600,
+      storage_type: 'supabase'
+    });
+  } else {
+    throw new BadRequestError('Document file not found');
+  }
+}));
+
+/**
+ * GET /api/uploads/file/:id
+ * Serve actual file binary (for database storage)
+ */
+router.get('/file/:id', validateId, asyncHandler(async (req, res) => {
+  const document = await db.promisify.get('SELECT * FROM documents WHERE id = $1', [req.params.id]);
+  if (!document) {throw new NotFoundError('Document');}
+
+  if (document.upload_status !== 'completed') {
+    throw new BadRequestError('Document upload is not complete');
   }
 
-  const signedUrl = await supabase.createSignedDownloadUrl(document.object_path);
+  if (!document.file_data) {
+    throw new BadRequestError('Document file not stored in database');
+  }
 
-  res.json({
-    document_id: document.id,
-    original_filename: document.original_filename,
-    mime_type: document.mime_type,
-    download_url: signedUrl,
-    expires_in: 3600
-  });
+  // Convert base64 back to buffer
+  const fileBuffer = Buffer.from(document.file_data, 'base64');
+  
+  // Set headers for file download
+  res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `inline; filename="${document.original_filename}"`);
+  res.setHeader('Content-Length', fileBuffer.length);
+  
+  res.send(fileBuffer);
 }));
 
 // ============================================
@@ -158,12 +264,11 @@ router.delete('/:id', validateId, asyncHandler(async (req, res) => {
   const document = await db.promisify.get('SELECT * FROM documents WHERE id = $1', [req.params.id]);
   if (!document) {throw new NotFoundError('Document');}
 
-  // Delete from storage if uploaded
-  if (document.upload_status === 'completed' && supabase.isConfigured()) {
+  // Delete from Supabase storage if applicable
+  if (document.upload_status === 'completed' && !document.file_data && useSupabase) {
     try {
       await supabase.deleteObject(document.object_path);
     } catch (err) {
-      // Log but don't fail if storage delete fails
       console.warn('Failed to delete from storage:', err.message);
     }
   }
@@ -182,8 +287,10 @@ router.delete('/:id', validateId, asyncHandler(async (req, res) => {
 // ============================================
 
 router.get('/status', asyncHandler(async (req, res) => {
-  const configured = supabase.isConfigured();
-  const bucket = supabase.getBucket();
+  // Always configured - either Supabase or PostgreSQL storage
+  const configured = true;
+  const storageType = useSupabase ? 'supabase' : 'database';
+  const bucket = useSupabase ? supabase.getBucket() : 'local';
 
   const stats = await db.promisify.get(`
     SELECT 
@@ -196,7 +303,8 @@ router.get('/status', asyncHandler(async (req, res) => {
 
   res.json({
     configured,
-    bucket: configured ? bucket : null,
+    storage_type: storageType,
+    bucket: bucket,
     stats: {
       total_documents: parseInt(stats?.total_documents) || 0,
       completed: parseInt(stats?.completed) || 0,

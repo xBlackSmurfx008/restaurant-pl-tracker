@@ -354,7 +354,7 @@ function ReportsPanel() {
 
     return (
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>📅 Daily Summary</h3>
+        <h3 style={{ marginBottom: '20px' }}>Daily Summary</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '25px' }}>
           <div className="metric-card">
@@ -412,7 +412,7 @@ function ReportsPanel() {
 
     return (
       <div className="card">
-        <h3 style={{ marginBottom: '20px' }}>🏪 Vendor Spending Analysis</h3>
+        <h3 style={{ marginBottom: '20px' }}>Vendor Spending Analysis</h3>
         
         <div className="metric-card" style={{ marginBottom: '20px', background: '#f8f9fa' }}>
           <div className="metric-label">Total Vendor Spend</div>

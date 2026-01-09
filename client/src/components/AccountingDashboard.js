@@ -336,7 +336,7 @@ function AccountingDashboard() {
   const renderPayables = () => (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3>📤 Accounts Payable</h3>
+        <h3>Accounts Payable</h3>
         <button className="btn btn-primary" onClick={() => setShowPayableForm(true)}>
           + Add Payable
         </button>
@@ -606,7 +606,7 @@ function AccountingDashboard() {
 
       {/* Danger Zone - Clear All Data */}
       <div className="card" style={{ marginTop: '30px', border: '2px solid #dc3545' }}>
-        <h3 style={{ marginBottom: '15px', color: '#dc3545' }}>⚠️ Danger Zone</h3>
+        <h3 style={{ marginBottom: '15px', color: '#dc3545' }}>Danger Zone</h3>
         
         <div style={{ 
           background: '#fff5f5', 
@@ -962,7 +962,7 @@ function AccountingDashboard() {
         }}>
           <div className="card" style={{ width: '500px', border: '3px solid #dc3545' }}>
             <h3 style={{ marginBottom: '20px', color: '#dc3545' }}>
-              ⚠️ Confirm Data Deletion
+              Confirm Data Deletion
             </h3>
             
             <div style={{ 

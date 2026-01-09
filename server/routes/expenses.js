@@ -37,6 +37,235 @@ router.get('/meta/categories', asyncHandler(async (req, res) => {
 }));
 
 /**
+ * POST /api/expenses/suggest-category
+ * Auto-suggest category based on vendor and description
+ */
+router.post('/suggest-category', asyncHandler(async (req, res) => {
+  const { vendor_id, description } = req.body;
+  const descLower = (description || '').toLowerCase();
+  
+  // First check if we have previous expenses from this vendor
+  if (vendor_id) {
+    const vendorCategory = await db.promisify.get(`
+      SELECT category_id, ec.name as category_name, ec.expense_type,
+             COUNT(*) as usage_count
+      FROM expenses e
+      JOIN expense_categories ec ON e.category_id = ec.id
+      WHERE e.vendor_id = $1 AND ec.is_active = true
+      GROUP BY category_id, ec.name, ec.expense_type
+      ORDER BY usage_count DESC
+      LIMIT 1
+    `, [vendor_id]);
+    
+    if (vendorCategory) {
+      return res.json({
+        suggested_category_id: vendorCategory.category_id,
+        category_name: vendorCategory.category_name,
+        expense_type: vendorCategory.expense_type,
+        confidence: 0.9,
+        reason: 'Based on previous vendor purchases'
+      });
+    }
+  }
+  
+  // Keyword-based matching
+  const keywordRules = [
+    // Food/COGS
+    { keywords: ['food', 'produce', 'meat', 'dairy', 'seafood', 'grocery', 'ingredients', 'sysco', 'us foods', 'restaurant depot'], type: 'cogs', name: 'Food & Ingredients' },
+    { keywords: ['beverage', 'drink', 'coffee', 'tea', 'soda', 'juice'], type: 'cogs', name: 'Beverages' },
+    { keywords: ['alcohol', 'wine', 'beer', 'liquor', 'spirits'], type: 'cogs', name: 'Alcohol' },
+    { keywords: ['packaging', 'container', 'box', 'bag', 'napkin', 'cup', 'lid', 'to-go', 'takeout'], type: 'cogs', name: 'Packaging & Supplies' },
+    
+    // Operating
+    { keywords: ['rent', 'lease', 'mortgage'], type: 'operating', name: 'Rent & Lease' },
+    { keywords: ['electric', 'power', 'utility', 'gas', 'water', 'sewage'], type: 'operating', name: 'Utilities' },
+    { keywords: ['phone', 'internet', 'wifi', 'cable', 'communication'], type: 'operating', name: 'Communications' },
+    { keywords: ['insurance', 'liability', 'coverage'], type: 'operating', name: 'Insurance' },
+    { keywords: ['repair', 'maintenance', 'hvac', 'plumbing', 'fix'], type: 'operating', name: 'Repairs & Maintenance' },
+    { keywords: ['cleaning', 'janitorial', 'sanitation', 'pest control'], type: 'operating', name: 'Cleaning & Sanitation' },
+    { keywords: ['equipment', 'appliance', 'machine', 'oven', 'fryer', 'refrigerator'], type: 'operating', name: 'Equipment' },
+    { keywords: ['license', 'permit', 'fee', 'certification'], type: 'operating', name: 'Licenses & Permits' },
+    { keywords: ['pos', 'software', 'subscription', 'saas', 'square', 'toast'], type: 'operating', name: 'Software & Technology' },
+    { keywords: ['office', 'supplies', 'paper', 'printer', 'ink'], type: 'operating', name: 'Office Supplies' },
+    
+    // Marketing
+    { keywords: ['advertis', 'marketing', 'promo', 'social media', 'facebook', 'instagram', 'google ads', 'yelp'], type: 'marketing', name: 'Advertising' },
+    { keywords: ['print', 'flyer', 'menu print', 'business card', 'signage', 'banner'], type: 'marketing', name: 'Print Materials' },
+    { keywords: ['event', 'sponsor', 'catering promo', 'community'], type: 'marketing', name: 'Events & Sponsorships' },
+    
+    // Payroll
+    { keywords: ['payroll', 'wage', 'salary', 'bonus', 'commission'], type: 'payroll', name: 'Wages & Salaries' },
+    { keywords: ['payroll tax', 'fica', 'medicare', 'social security'], type: 'payroll', name: 'Payroll Taxes' },
+    { keywords: ['health', 'dental', 'vision', 'benefit', '401k', 'retirement'], type: 'payroll', name: 'Benefits' },
+    
+    // Other
+    { keywords: ['bank', 'processing', 'merchant', 'credit card fee'], type: 'other', name: 'Bank & Card Fees' },
+    { keywords: ['legal', 'attorney', 'lawyer', 'consulting'], type: 'other', name: 'Professional Services' },
+    { keywords: ['accounting', 'bookkeep', 'cpa', 'tax prep'], type: 'other', name: 'Accounting' },
+  ];
+  
+  for (const rule of keywordRules) {
+    const matchedKeyword = rule.keywords.find(kw => descLower.includes(kw));
+    if (matchedKeyword) {
+      // Find or create category
+      let category = await db.promisify.get(`
+        SELECT id, name, expense_type FROM expense_categories 
+        WHERE LOWER(name) = LOWER($1) AND is_active = true
+      `, [rule.name]);
+      
+      if (!category) {
+        // Try partial match
+        category = await db.promisify.get(`
+          SELECT id, name, expense_type FROM expense_categories 
+          WHERE expense_type = $1 AND is_active = true
+          ORDER BY id LIMIT 1
+        `, [rule.type]);
+      }
+      
+      if (category) {
+        return res.json({
+          suggested_category_id: category.id,
+          category_name: category.name,
+          expense_type: category.expense_type,
+          confidence: 0.7,
+          reason: `Keyword match: "${matchedKeyword}"`
+        });
+      }
+    }
+  }
+  
+  // No match found
+  res.json({
+    suggested_category_id: null,
+    category_name: null,
+    expense_type: null,
+    confidence: 0,
+    reason: 'No automatic category match found'
+  });
+}));
+
+/**
+ * GET /api/expenses/dashboard
+ * Get expense dashboard data with breakdowns
+ */
+router.get('/dashboard', asyncHandler(async (req, res) => {
+  const { start, end } = req.query;
+  
+  let dateFilter = '';
+  const params = [];
+  let paramIndex = 1;
+  
+  if (start) {
+    dateFilter += ` AND e.expense_date >= $${paramIndex++}`;
+    params.push(start);
+  }
+  if (end) {
+    dateFilter += ` AND e.expense_date <= $${paramIndex++}`;
+    params.push(end);
+  }
+  
+  // Get totals by expense type (COGS, Operating, Marketing, Payroll, Other)
+  const byType = await db.promisify.all(`
+    SELECT 
+      ec.expense_type,
+      COUNT(e.id) as expense_count,
+      SUM(e.amount) as total_amount,
+      AVG(e.amount) as avg_amount
+    FROM expenses e
+    JOIN expense_categories ec ON e.category_id = ec.id
+    WHERE 1=1 ${dateFilter}
+    GROUP BY ec.expense_type
+    ORDER BY total_amount DESC
+  `, params);
+  
+  // Get totals by category
+  const byCategory = await db.promisify.all(`
+    SELECT 
+      ec.id as category_id,
+      ec.name as category_name,
+      ec.expense_type,
+      COUNT(e.id) as expense_count,
+      SUM(e.amount) as total_amount,
+      ec.budget_monthly
+    FROM expenses e
+    JOIN expense_categories ec ON e.category_id = ec.id
+    WHERE 1=1 ${dateFilter}
+    GROUP BY ec.id, ec.name, ec.expense_type, ec.budget_monthly
+    ORDER BY total_amount DESC
+  `, params);
+  
+  // Get totals by vendor
+  const byVendor = await db.promisify.all(`
+    SELECT 
+      v.id as vendor_id,
+      COALESCE(v.name, 'No Vendor') as vendor_name,
+      COUNT(e.id) as expense_count,
+      SUM(e.amount) as total_amount
+    FROM expenses e
+    LEFT JOIN vendors v ON e.vendor_id = v.id
+    WHERE 1=1 ${dateFilter}
+    GROUP BY v.id, v.name
+    ORDER BY total_amount DESC
+    LIMIT 10
+  `, params);
+  
+  // Get daily trend
+  const dailyTrend = await db.promisify.all(`
+    SELECT 
+      e.expense_date::date as date,
+      SUM(e.amount) as total_amount,
+      COUNT(e.id) as expense_count
+    FROM expenses e
+    WHERE 1=1 ${dateFilter}
+    GROUP BY e.expense_date::date
+    ORDER BY date
+  `, params);
+  
+  // Get uncategorized or needs-attention expenses
+  const needsAttention = await db.promisify.all(`
+    SELECT e.id, e.expense_date, e.description, e.amount, v.name as vendor_name,
+           ec.name as category_name
+    FROM expenses e
+    LEFT JOIN vendors v ON e.vendor_id = v.id
+    LEFT JOIN expense_categories ec ON e.category_id = ec.id
+    WHERE (e.category_id IS NULL OR ec.expense_type = 'other') ${dateFilter}
+    ORDER BY e.expense_date DESC
+    LIMIT 10
+  `, params);
+  
+  // Calculate grand total
+  const grandTotal = byType.reduce((sum, t) => sum + parseFloat(t.total_amount || 0), 0);
+  
+  // Add percentages
+  const byTypeWithPercent = byType.map(t => ({
+    ...t,
+    total_amount: parseFloat(t.total_amount || 0),
+    percent_of_total: grandTotal > 0 ? ((parseFloat(t.total_amount || 0) / grandTotal) * 100).toFixed(1) : 0
+  }));
+  
+  const byCategoryWithPercent = byCategory.map(c => ({
+    ...c,
+    total_amount: parseFloat(c.total_amount || 0),
+    percent_of_total: grandTotal > 0 ? ((parseFloat(c.total_amount || 0) / grandTotal) * 100).toFixed(1) : 0,
+    budget_status: c.budget_monthly ? (parseFloat(c.total_amount || 0) / parseFloat(c.budget_monthly) * 100).toFixed(0) : null
+  }));
+  
+  res.json({
+    period: { start, end },
+    grand_total: grandTotal,
+    by_type: byTypeWithPercent,
+    by_category: byCategoryWithPercent,
+    by_vendor: byVendor.map(v => ({
+      ...v,
+      total_amount: parseFloat(v.total_amount || 0),
+      percent_of_total: grandTotal > 0 ? ((parseFloat(v.total_amount || 0) / grandTotal) * 100).toFixed(1) : 0
+    })),
+    daily_trend: dailyTrend,
+    needs_attention: needsAttention
+  });
+}));
+
+/**
  * GET /api/expenses/meta/summary
  */
 router.get('/meta/summary', asyncHandler(async (req, res) => {

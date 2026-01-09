@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
+import ExpenseDashboard from './ExpenseDashboard';
 
 function ExpenseTracker() {
+  // View state: 'tracker' or 'analysis'
+  const [activeView, setActiveView] = useState('tracker');
   // State
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -30,6 +33,10 @@ function ExpenseTracker() {
     reference_number: '',
     notes: '',
   });
+  
+  // Auto-suggestion state
+  const [categorySuggestion, setCategorySuggestion] = useState(null);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
 
   // Detail view
   const [selectedExpense, setSelectedExpense] = useState(null);
@@ -79,6 +86,73 @@ function ExpenseTracker() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Auto-suggest category when vendor or description changes
+  useEffect(() => {
+    const suggestCategory = async () => {
+      if (!showForm || editingExpense) return; // Only for new expenses
+      if (!formData.vendor_id && !formData.description) {
+        setCategorySuggestion(null);
+        return;
+      }
+      
+      setSuggestionLoading(true);
+      try {
+        const suggestion = await api.suggestCategory(
+          formData.vendor_id || null,
+          formData.description || ''
+        );
+        if (suggestion.suggested_category_id && !formData.category_id) {
+          setCategorySuggestion(suggestion);
+        } else {
+          setCategorySuggestion(null);
+        }
+      } catch (error) {
+        console.error('Error getting category suggestion:', error);
+        setCategorySuggestion(null);
+      } finally {
+        setSuggestionLoading(false);
+      }
+    };
+    
+    const timer = setTimeout(suggestCategory, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [formData.vendor_id, formData.description, showForm, editingExpense, formData.category_id]);
+
+  const applySuggestion = () => {
+    if (categorySuggestion?.suggested_category_id) {
+      setFormData(prev => ({ ...prev, category_id: categorySuggestion.suggested_category_id.toString() }));
+      setCategorySuggestion(null);
+    }
+  };
+
+  // Get category info for display
+  const getCategoryInfo = (categoryId) => {
+    const cat = categories.find(c => c.id === parseInt(categoryId));
+    return cat || null;
+  };
+
+  // Brand colors
+  const brandColors = {
+    primary: '#9AC636',
+    primaryDark: '#7BA328',
+    charcoal: '#1A1A1A',
+    success: '#43A047',
+    warning: '#FFB300',
+    danger: '#E53935',
+    dangerDark: '#C62828',
+    info: '#1976D2',
+    gray: '#3D3D3D'
+  };
+
+  // Category type colors - using brand colors
+  const typeColors = {
+    cogs: { bg: 'rgba(255,179,0,0.12)', text: brandColors.charcoal, border: brandColors.warning },
+    operating: { bg: 'rgba(25,118,210,0.12)', text: brandColors.charcoal, border: brandColors.info },
+    marketing: { bg: 'rgba(154,198,54,0.12)', text: brandColors.charcoal, border: brandColors.primary },
+    payroll: { bg: 'rgba(67,160,71,0.12)', text: brandColors.charcoal, border: brandColors.success },
+    other: { bg: 'rgba(61,61,61,0.08)', text: brandColors.charcoal, border: brandColors.gray }
+  };
 
   // Load expense details
   const loadExpenseDetails = async (expenseId) => {
@@ -337,49 +411,114 @@ function ExpenseTracker() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="card-header">
-        <h2 className="card-title">💸 Expense Tracker</h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          {uploadConfigured && (
-            <label 
-              className="btn btn-secondary" 
-              style={{ 
-                cursor: 'pointer', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px',
-                background: '#2D6B4F',
-                border: '2px dashed #4CAF50',
-              }}
-            >
-              📄 Upload Receipt/Invoice
-              <input
-                type="file"
-                ref={quickUploadRef}
-                multiple
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  if (e.target.files.length) {
-                    handleQuickUpload(e.target.files);
-                    e.target.value = '';
-                  }
-                }}
-              />
-            </label>
+      {/* Header with View Tabs */}
+      <div className="card-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 className="card-title">Expenses</h2>
+          {activeView === 'tracker' && (
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {uploadConfigured && (
+                <label 
+                  className="btn btn-secondary" 
+                  style={{ 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    background: brandColors.primaryDark,
+                    border: `2px dashed ${brandColors.success}`,
+                  }}
+                >
+                  Upload Receipt/Invoice
+                  <input
+                    type="file"
+                    ref={quickUploadRef}
+                    multiple
+                    accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files.length) {
+                        handleQuickUpload(e.target.files);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                </label>
+              )}
+              <button className="btn btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
+                + Add Expense
+              </button>
+            </div>
           )}
-          <button className="btn btn-primary" onClick={() => { resetForm(); setShowForm(true); }}>
-            + Add Expense
+        </div>
+        
+        {/* Sub-tabs for Tracker and Analysis */}
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          background: brandColors.charcoal,
+          padding: '4px',
+          borderRadius: '10px',
+          width: 'fit-content'
+        }}>
+          <button
+            onClick={() => setActiveView('tracker')}
+            style={{
+              padding: '10px 24px',
+              border: 'none',
+              borderRadius: '8px',
+              background: activeView === 'tracker' ? brandColors.primary : 'transparent',
+              color: activeView === 'tracker' ? brandColors.charcoal : '#fff',
+              fontFamily: 'Oswald, sans-serif',
+              fontSize: '0.9rem',
+              letterSpacing: '0.5px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontWeight: activeView === 'tracker' ? '600' : '400',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            Expense Tracker
+          </button>
+          <button
+            onClick={() => setActiveView('analysis')}
+            style={{
+              padding: '10px 24px',
+              border: 'none',
+              borderRadius: '8px',
+              background: activeView === 'analysis' ? brandColors.primary : 'transparent',
+              color: activeView === 'analysis' ? brandColors.charcoal : '#fff',
+              fontFamily: 'Oswald, sans-serif',
+              fontSize: '0.9rem',
+              letterSpacing: '0.5px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              fontWeight: activeView === 'analysis' ? '600' : '400',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            Expense Analysis
           </button>
         </div>
       </div>
+
+      {/* Render Analysis Dashboard */}
+      {activeView === 'analysis' && <ExpenseDashboard />}
+
+      {/* Render Expense Tracker */}
+      {activeView === 'tracker' && (
+        <>
+      
       
       {/* Upload Progress Banner */}
       {uploading && (
         <div style={{
-          background: 'linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)',
-          border: '2px solid #2196F3',
+          background: `linear-gradient(135deg, rgba(25,118,210,0.1) 0%, rgba(25,118,210,0.2) 100%)`,
+          border: `2px solid ${brandColors.info}`,
           borderRadius: '8px',
           padding: '16px 20px',
           marginBottom: '20px',
@@ -390,8 +529,8 @@ function ExpenseTracker() {
         }}>
           <div className="spinner" style={{ width: '24px', height: '24px', margin: 0 }}></div>
           <div>
-            <strong style={{ color: '#1565C0' }}>Uploading Documents...</strong>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#1976D2' }}>
+            <strong style={{ color: brandColors.info }}>Uploading Documents...</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: brandColors.info }}>
               {uploadProgress || 'Please wait...'}
             </p>
           </div>
@@ -401,8 +540,8 @@ function ExpenseTracker() {
       {/* Upload Status Banner */}
       {!uploadConfigured && (
         <div style={{
-          background: 'linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%)',
-          border: '1px solid #FF9800',
+          background: `linear-gradient(135deg, rgba(255,179,0,0.1) 0%, rgba(255,179,0,0.2) 100%)`,
+          border: `1px solid ${brandColors.warning}`,
           borderRadius: '8px',
           padding: '16px 20px',
           marginBottom: '20px',
@@ -410,10 +549,10 @@ function ExpenseTracker() {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#FF9800' }}>!</span>
           <div>
-            <strong style={{ color: '#E65100' }}>Document Upload Not Configured</strong>
-            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: '#BF360C' }}>
+            <strong style={{ color: brandColors.warning }}>Document Upload Not Configured</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: brandColors.charcoal }}>
               Contact your administrator to enable PDF/receipt uploads via Supabase storage.
             </p>
           </div>
@@ -492,25 +631,52 @@ function ExpenseTracker() {
                 <tr>
                   <th>Date</th>
                   <th>Description</th>
+                  <th>Category</th>
                   <th>Vendor</th>
                   <th>Amount</th>
-                  <th>📎 Receipts</th>
+                  <th>Docs</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((expense) => (
+                {expenses.map((expense) => {
+                  const catColors = typeColors[expense.expense_type] || typeColors.other;
+                  return (
                   <tr 
                     key={expense.id}
                     style={{ 
                       cursor: 'pointer',
-                      background: selectedExpense?.id === expense.id ? '#f0f4ff' : 'transparent'
+                      background: selectedExpense?.id === expense.id ? 'rgba(154,198,54,0.08)' : 'transparent'
                     }}
                     onClick={() => loadExpenseDetails(expense.id)}
                   >
                     <td>{expense.expense_date?.split('T')[0]}</td>
-                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {expense.description}
+                    </td>
+                    <td>
+                      {expense.category_name ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          background: catColors.bg,
+                          color: catColors.text,
+                          border: `1px solid ${catColors.border}`,
+                          padding: '4px 10px',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {expense.category_name}
+                        </span>
+                      ) : (
+                        <span style={{
+                          color: brandColors.warning,
+                          fontSize: '0.85rem'
+                        }}>Uncategorized</span>
+                      )}
                     </td>
                     <td>{expense.vendor_name || '—'}</td>
                     <td style={{ fontWeight: '600' }}>{formatCurrency(expense.amount)}</td>
@@ -518,13 +684,13 @@ function ExpenseTracker() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {expense.document_count > 0 ? (
                           <span style={{ 
-                            background: '#e3f2fd', 
+                            background: `rgba(25,118,210,0.12)`, 
                             padding: '4px 10px', 
                             borderRadius: '12px',
                             fontSize: '0.85rem',
                             fontWeight: '500'
                           }}>
-                            📎 {expense.document_count}
+                            {expense.document_count}
                           </span>
                         ) : (
                           <span style={{ color: '#ccc', fontSize: '0.85rem' }}>—</span>
@@ -532,18 +698,18 @@ function ExpenseTracker() {
                         {uploadConfigured && (
                           <label style={{ 
                             cursor: 'pointer',
-                            background: '#E8F5E9',
-                            border: '1px solid #4CAF50',
+                            background: `rgba(67,160,71,0.12)`,
+                            border: `1px solid ${brandColors.success}`,
                             borderRadius: '4px',
                             padding: '4px 8px',
                             fontSize: '0.75rem',
-                            color: '#2E7D32',
+                            color: brandColors.success,
                             fontWeight: '500',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            📤
+                            +
                             <input
                               type="file"
                               multiple
@@ -577,7 +743,8 @@ function ExpenseTracker() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -599,7 +766,7 @@ function ExpenseTracker() {
 
             {/* Basic Info */}
             <div style={{ 
-              background: '#f8f9fa', 
+              background: '#F5F5F5', 
               padding: '15px', 
               borderRadius: '8px',
               marginBottom: '20px'
@@ -626,11 +793,10 @@ function ExpenseTracker() {
               background: 'linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%)',
               borderRadius: '12px',
               padding: '16px',
-              border: '2px solid #c8e6c9'
+              border: `2px solid ${brandColors.success}`
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.3rem' }}>📎</span> 
+                <h4 style={{ margin: 0 }}>
                   Documents ({documents.length})
                 </h4>
                 {uploadConfigured ? (
@@ -648,7 +814,7 @@ function ExpenseTracker() {
                     {uploading ? (
                       <>{uploadProgress}</>
                     ) : (
-                      <>📤 Upload PDF/Image</>
+                      <>Upload PDF/Image</>
                     )}
                     <input
                       type="file"
@@ -661,13 +827,13 @@ function ExpenseTracker() {
                   </label>
                 ) : (
                   <span style={{ 
-                    color: '#f57c00', 
+                    color: brandColors.warning, 
                     fontSize: '0.85rem',
-                    background: '#fff3e0',
+                    background: `rgba(255,179,0,0.1)`,
                     padding: '6px 12px',
                     borderRadius: '4px'
                   }}>
-                    ⚠️ Uploads not configured
+                    Uploads not configured
                   </span>
                 )}
               </div>
@@ -680,7 +846,7 @@ function ExpenseTracker() {
                   onDragOver={handleDrag}
                   onDrop={(e) => handleDrop(e, selectedExpense)}
                   style={{
-                    border: dragActive ? '2px solid #4CAF50' : '2px dashed #9AC636',
+                    border: dragActive ? `2px solid ${brandColors.success}` : `2px dashed ${brandColors.primary}`,
                     borderRadius: '8px',
                     padding: '16px',
                     marginBottom: '12px',
@@ -689,7 +855,7 @@ function ExpenseTracker() {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  <span style={{ fontSize: '1.2rem' }}>📄</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>FILE</span>
                   <span style={{ marginLeft: '8px', color: '#666' }}>
                     Drop files here to attach to this expense
                   </span>
@@ -719,10 +885,10 @@ function ExpenseTracker() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: doc.mime_type?.includes('pdf') ? '#FFEBEE' : '#E3F2FD',
+                          background: doc.mime_type?.includes('pdf') ? `rgba(229,57,53,0.08)` : `rgba(25,118,210,0.08)`,
                           borderRadius: '8px'
                         }}>
-                          {doc.mime_type?.includes('pdf') ? '📄' : '🖼️'}
+                          {doc.mime_type?.includes('pdf') ? 'PDF' : 'IMG'}
                         </span>
                         <div>
                           <div style={{ fontWeight: '500' }}>{doc.original_filename}</div>
@@ -737,14 +903,14 @@ function ExpenseTracker() {
                           style={{ padding: '8px 14px' }}
                           onClick={() => handleDownload(doc)}
                         >
-                          ⬇️ View
+                          View
                         </button>
                         <button 
                           className="btn btn-danger" 
                           style={{ padding: '8px 12px' }}
                           onClick={() => handleDeleteDocument(doc.id)}
                         >
-                          🗑️
+                          ×
                         </button>
                       </div>
                     </div>
@@ -758,7 +924,7 @@ function ExpenseTracker() {
                   background: 'rgba(255,255,255,0.6)',
                   borderRadius: '8px'
                 }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '8px', opacity: 0.5 }}>📎</div>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px', opacity: 0.5, fontWeight: 'bold' }}>—</div>
                   <p style={{ margin: 0, fontSize: '0.95rem' }}>No documents attached yet</p>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#999' }}>
                     Upload receipts, invoices, or other supporting documents
@@ -804,9 +970,9 @@ function ExpenseTracker() {
                         <td style={{ fontWeight: '600' }}>{formatCurrency(item.line_total)}</td>
                         <td>
                           {item.ingredient_name || item.mapped_category_name ? (
-                            <span style={{ color: '#28a745' }}>✓ {item.ingredient_name || item.mapped_category_name}</span>
+                            <span style={{ color: brandColors.success }}>✓ {item.ingredient_name || item.mapped_category_name}</span>
                           ) : (
-                            <span style={{ color: '#ffc107' }}>!</span>
+                            <span style={{ color: brandColors.warning }}>!</span>
                           )}
                         </td>
                       </tr>
@@ -848,7 +1014,7 @@ function ExpenseTracker() {
                 onDragOver={handleDrag}
                 onDrop={(e) => handleDrop(e)}
                 style={{
-                  border: dragActive ? '3px solid #4CAF50' : '3px dashed #9AC636',
+                  border: dragActive ? `3px solid ${brandColors.success}` : `3px dashed ${brandColors.primary}`,
                   borderRadius: '12px',
                   padding: '24px',
                   marginBottom: '24px',
@@ -859,17 +1025,17 @@ function ExpenseTracker() {
                 }}
                 onClick={() => document.getElementById('form-file-input').click()}
               >
-                <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄</div>
+                <div style={{ fontSize: '1.5rem', marginBottom: '8px', fontWeight: 'bold', color: brandColors.primary }}>+</div>
                 <div style={{ 
                   fontSize: '1.1rem', 
                   fontWeight: '600', 
-                  color: '#1A1A1A',
+                  color: brandColors.charcoal,
                   marginBottom: '4px'
                 }}>
                   Drop Receipt or Invoice Here
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                  or <span style={{ color: '#9AC636', fontWeight: '600', textDecoration: 'underline' }}>click to browse</span>
+                  or <span style={{ color: brandColors.primary, fontWeight: '600', textDecoration: 'underline' }}>click to browse</span>
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '8px' }}>
                   Supports PDF, PNG, JPG, JPEG, GIF, WEBP
@@ -891,14 +1057,14 @@ function ExpenseTracker() {
             {/* Pending Files Preview */}
             {pendingFiles.length > 0 && (
               <div style={{
-                background: '#E8F5E9',
-                border: '1px solid #4CAF50',
+                background: `rgba(67,160,71,0.08)`,
+                border: `1px solid ${brandColors.success}`,
                 borderRadius: '8px',
                 padding: '12px',
                 marginBottom: '20px'
               }}>
-                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#2E7D32' }}>
-                  📎 {pendingFiles.length} file(s) ready to upload
+                <div style={{ fontWeight: '600', marginBottom: '8px', color: brandColors.success }}>
+                  {pendingFiles.length} file(s) ready to upload
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {pendingFiles.map((file, idx) => (
@@ -911,7 +1077,7 @@ function ExpenseTracker() {
                       borderRadius: '4px'
                     }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {file.type.includes('pdf') ? '📄' : '🖼️'}
+                        {file.type.includes('pdf') ? 'PDF' : 'IMG'}
                         <span style={{ fontSize: '0.9rem' }}>{file.name}</span>
                         <span style={{ fontSize: '0.8rem', color: '#999' }}>
                           ({Math.round(file.size / 1024)} KB)
@@ -921,12 +1087,12 @@ function ExpenseTracker() {
                         type="button"
                         onClick={() => removePendingFile(idx)}
                         style={{
-                          background: '#ffebee',
+                          background: `rgba(229,57,53,0.08)`,
                           border: 'none',
                           borderRadius: '4px',
                           padding: '4px 8px',
                           cursor: 'pointer',
-                          color: '#c62828'
+                          color: brandColors.dangerDark
                         }}
                       >
                         ✕
@@ -950,17 +1116,140 @@ function ExpenseTracker() {
               </div>
               <div className="form-group">
                 <label className="form-label">Category *</label>
+                
+                {/* Auto-suggestion banner */}
+                {categorySuggestion && !formData.category_id && (
+                  <div style={{
+                    background: `linear-gradient(135deg, rgba(67,160,71,0.08) 0%, rgba(67,160,71,0.15) 100%)`,
+                    border: `2px solid ${brandColors.success}`,
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div>
+                        <div style={{ fontWeight: '600', color: brandColors.success, fontSize: '0.9rem' }}>
+                          Suggested: {categorySuggestion.category_name}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: brandColors.primaryDark }}>
+                          {categorySuggestion.reason}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applySuggestion}
+                      style={{
+                        background: brandColors.success,
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
+                
+                {suggestionLoading && !formData.category_id && (
+                  <div style={{
+                    background: '#F5F5F5',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontSize: '0.85rem',
+                    color: '#666'
+                  }}>
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid #ddd',
+                      borderTop: `2px solid ${brandColors.primary}`,
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite'
+                    }} />
+                    Looking for category match...
+                  </div>
+                )}
+                
                 <select
                   className="form-input"
                   value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, category_id: e.target.value });
+                    setCategorySuggestion(null);
+                  }}
                   required
+                  style={{
+                    borderColor: formData.category_id ? brandColors.primary : undefined,
+                    background: formData.category_id ? 'rgba(154,198,54,0.05)' : undefined
+                  }}
                 >
                   <option value="">Select category...</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {/* Group categories by type */}
+                  {['cogs', 'operating', 'marketing', 'payroll', 'other'].map(type => {
+                    const typeCategories = categories.filter(c => c.expense_type === type);
+                    if (typeCategories.length === 0) return null;
+                    const typeLabel = {
+                      cogs: 'Cost of Goods Sold',
+                      operating: 'Operating Expenses',
+                      marketing: 'Marketing',
+                      payroll: 'Payroll & Labor',
+                      other: 'Other'
+                    }[type];
+                    return (
+                      <optgroup key={type} label={typeLabel}>
+                        {typeCategories.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
                 </select>
+                
+                {/* Selected category display */}
+                {formData.category_id && (() => {
+                  const cat = getCategoryInfo(formData.category_id);
+                  if (!cat) return null;
+                  const colors = typeColors[cat.expense_type] || typeColors.other;
+                  return (
+                    <div style={{
+                      marginTop: '8px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: colors.bg,
+                      border: `1px solid ${colors.border}`,
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem'
+                    }}>
+                      <span style={{ 
+                        width: '8px', 
+                        height: '8px', 
+                        borderRadius: '50%', 
+                        background: colors.border 
+                      }} />
+                      <span style={{ color: colors.text, fontWeight: '500' }}>
+                        {cat.name}
+                      </span>
+                      <span style={{ color: colors.text, opacity: 0.7, fontSize: '0.75rem' }}>
+                        ({cat.expense_type})
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="form-group">
                 <label className="form-label">Vendor</label>
@@ -1148,6 +1437,8 @@ function ExpenseTracker() {
             </form>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );

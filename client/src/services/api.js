@@ -326,6 +326,33 @@ class ApiService {
     return this.request(`/expenses/meta/summary${query}`);
   }
 
+  async getExpenseDashboard(start, end) {
+    const params = new URLSearchParams();
+    if (start) params.append('start', start);
+    if (end) params.append('end', end);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request(`/expenses/dashboard${query}`);
+  }
+
+  async suggestCategory(vendorId, description) {
+    return this.request('/expenses/suggest-category', {
+      method: 'POST',
+      body: { vendor_id: vendorId, description }
+    });
+  }
+
+  async createExpenseCategory(category) {
+    return this.request('/expenses/categories', { method: 'POST', body: category });
+  }
+
+  async updateExpenseCategory(id, category) {
+    return this.request(`/expenses/categories/${id}`, { method: 'PUT', body: category });
+  }
+
+  async getGroupedCategories() {
+    return this.request('/expenses/categories/grouped');
+  }
+
   // ============================================
   // EXPENSE LINE ITEMS
   // ============================================
@@ -390,32 +417,62 @@ class ApiService {
   }
 
   /**
-   * Upload a file to Supabase via signed URL
+   * Upload a file to storage (PostgreSQL database or Supabase)
    * @param {File} file - the File object to upload
    * @param {number|null} expenseId - optional expense to attach to
    * @param {number|null} vendorId - optional vendor
    * @returns {Promise<object>} - the completed document record
    */
   async uploadFile(file, expenseId = null, vendorId = null) {
-    // 1. Get signed upload URL
+    // 1. Create upload record and get upload endpoint
     const uploadData = await this.createUpload(file.name, file.type, vendorId);
     
-    // 2. Upload directly to Supabase
-    const uploadResponse = await fetch(uploadData.upload_url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-      },
-      body: file,
-    });
+    let uploadResponse;
+    
+    if (uploadData.storage_type === 'database') {
+      // Upload directly to PostgreSQL via our API
+      uploadResponse = await fetch(`${API_BASE_URL}/uploads/data/${uploadData.document_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+    } else {
+      // Upload to Supabase storage via signed URL
+      uploadResponse = await fetch(uploadData.upload_url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+    }
 
     if (!uploadResponse.ok) {
       throw new Error('Failed to upload file to storage');
     }
 
-    // 3. Complete the upload
+    // 3. Complete the upload and link to expense
     const result = await this.completeUpload(uploadData.document_id, expenseId, file.size);
     return result;
+  }
+
+  /**
+   * Get the file URL for viewing/downloading
+   * @param {number} documentId - Document ID
+   * @returns {Promise<string>} - URL to view/download the file
+   */
+  async getFileUrl(documentId) {
+    const downloadData = await this.getDownloadUrl(documentId);
+    
+    // For database storage, return the direct file endpoint
+    if (downloadData.storage_type === 'database') {
+      return `${API_BASE_URL}/uploads/file/${documentId}`;
+    }
+    
+    // For Supabase, return the signed URL
+    return downloadData.download_url;
   }
 
   // ============================================

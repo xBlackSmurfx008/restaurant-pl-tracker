@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
 const brand = {
   green: '#9AC636',
@@ -10,214 +11,127 @@ const brand = {
 
 const tutorialSteps = [
   {
-    title: 'Welcome to Flavor 91!',
-    content: 'This quick tour will show you the key features of your restaurant management system. Let\'s get started!',
-    target: null,
+    title: 'Welcome to Flavor 91 Bistro!',
+    content: 'This quick tour will show you how to use your restaurant management system. Let\'s walk through the key features together!',
+    selector: null,
     position: 'center',
   },
   {
-    title: 'Operations vs Accounting',
-    content: 'Switch between Operations (daily restaurant tasks) and Accounting & Tax (financial tracking) using these buttons.',
-    target: '.section-selector',
+    title: 'Switch Between Modes',
+    content: 'Use these buttons to switch between Operations (day-to-day restaurant tasks) and Accounting & Tax (financial tracking, payroll, taxes).',
+    selector: '.section-selector',
     position: 'bottom',
   },
   {
     title: 'Navigation Tabs',
-    content: 'Each section has tabs for different features. In Operations: Dashboard, Sales, Recipes, Ingredients, and Vendors.',
-    target: '.tab-navigation',
+    content: 'Each mode has different tabs. In Operations you have: Dashboard, Sales, Recipes, Ingredients, and Vendors. Click a tab to view that section.',
+    selector: '.tab-navigation',
     position: 'bottom',
   },
   {
-    title: 'Dashboard Overview',
-    content: 'Your Dashboard shows menu performance, revenue, profit, and the Menu Engineering Matrix that categorizes items into Champions, Hidden Gems, Volume Drivers, and Needs Review.',
-    target: '.app-main',
+    title: 'Your Dashboard',
+    content: 'The Dashboard shows your revenue, profit, food costs, and labor costs at a glance. It also includes the Menu Engineering Matrix that categorizes items into Champions, Hidden Gems, Volume Drivers, and Needs Review.',
+    selector: '.app-main',
     position: 'top',
   },
   {
-    title: 'Quick Tip: Sales Entry',
-    content: 'End-of-day sales entry takes just 30 seconds! Go to Sales tab, enter quantities sold, and hit Save. That\'s it!',
-    target: null,
+    title: 'Quick Sales Entry',
+    content: 'Recording daily sales is fast! Go to the Sales tab, enter quantities sold for each menu item, and hit Save. The system calculates your profit automatically.',
+    selector: null,
     position: 'center',
   },
   {
-    title: 'You\'re All Set!',
-    content: 'Explore the system at your own pace. Remember: "Don\'t make me do math" — the system handles all calculations for you!',
-    target: null,
+    title: 'You\'re Ready!',
+    content: 'That\'s it! Explore the system at your own pace. Remember: "Don\'t make me do math" — the system handles all calculations for you!',
+    selector: null,
     position: 'center',
   },
 ];
 
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(26, 26, 26, 0.85)',
-    zIndex: 9999,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-  },
-  spotlight: {
-    position: 'fixed',
-    boxShadow: `0 0 0 9999px rgba(26, 26, 26, 0.85)`,
-    borderRadius: '8px',
-    zIndex: 9998,
-    transition: 'all 0.3s ease',
-  },
-  tooltip: {
-    position: 'fixed',
-    background: brand.white,
-    borderRadius: '8px',
-    padding: '24px',
-    maxWidth: '400px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-    zIndex: 10000,
-    animation: 'fadeIn 0.3s ease',
-  },
-  tooltipCenter: {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    background: brand.white,
-    borderRadius: '8px',
-    padding: '32px',
-    maxWidth: '500px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-    zIndex: 10000,
-    textAlign: 'center',
-    animation: 'fadeIn 0.3s ease',
-  },
-  accentBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '4px',
-    background: brand.green,
-    borderRadius: '8px 8px 0 0',
-  },
-  title: {
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '1.4rem',
-    fontWeight: 600,
-    color: brand.charcoal,
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    marginBottom: '12px',
-  },
-  content: {
-    fontFamily: "'Lato', sans-serif",
-    fontSize: '1rem',
-    color: '#666',
-    lineHeight: 1.6,
-    marginBottom: '20px',
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '16px',
-  },
-  progress: {
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '0.85rem',
-    color: '#999',
-    letterSpacing: '1px',
-  },
-  buttons: {
-    display: 'flex',
-    gap: '12px',
-  },
-  btnPrimary: {
-    padding: '10px 24px',
-    background: brand.green,
-    border: 'none',
-    color: brand.charcoal,
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  btnSecondary: {
-    padding: '10px 24px',
-    background: 'transparent',
-    border: `2px solid ${brand.charcoal}`,
-    color: brand.charcoal,
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '0.9rem',
-    fontWeight: 500,
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  btnSkip: {
-    padding: '8px 16px',
-    background: 'transparent',
-    border: 'none',
-    color: '#999',
-    fontFamily: "'Oswald', sans-serif",
-    fontSize: '0.8rem',
-    letterSpacing: '1px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  stepIndicator: {
-    display: 'flex',
-    gap: '8px',
-    justifyContent: 'center',
-    marginBottom: '20px',
-  },
-  stepDot: {
-    width: '10px',
-    height: '10px',
-    borderRadius: '50%',
-    background: '#ddd',
-    transition: 'all 0.2s ease',
-  },
-  stepDotActive: {
-    background: brand.green,
-    transform: 'scale(1.2)',
-  },
-};
-
 function Tutorial({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [targetRect, setTargetRect] = useState(null);
+  const [highlightStyle, setHighlightStyle] = useState(null);
+  const [tooltipStyle, setTooltipStyle] = useState({});
+
+  const updateHighlight = useCallback(() => {
+    const step = tutorialSteps[currentStep];
+    
+    if (!step.selector) {
+      setHighlightStyle(null);
+      setTooltipStyle({
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      });
+      return;
+    }
+
+    const element = document.querySelector(step.selector);
+    if (!element) {
+      setHighlightStyle(null);
+      setTooltipStyle({
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      });
+      return;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const padding = 8;
+
+    setHighlightStyle({
+      position: 'fixed',
+      top: rect.top - padding,
+      left: rect.left - padding,
+      width: rect.width + (padding * 2),
+      height: rect.height + (padding * 2),
+      borderRadius: '8px',
+      border: `3px solid ${brand.green}`,
+      boxShadow: `0 0 0 9999px rgba(0, 0, 0, 0.75), 0 0 30px 5px ${brand.green}`,
+      zIndex: 9998,
+      pointerEvents: 'none',
+      transition: 'all 0.4s ease',
+    });
+
+    // Position tooltip
+    const tooltipHeight = 220;
+    const tooltipWidth = 420;
+    let top, left;
+
+    if (step.position === 'bottom') {
+      top = rect.bottom + padding + 16;
+      left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+    } else if (step.position === 'top') {
+      top = rect.top - padding - tooltipHeight - 16;
+      left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+    } else {
+      top = rect.bottom + 16;
+      left = rect.left;
+    }
+
+    // Keep tooltip in viewport
+    left = Math.max(20, Math.min(left, window.innerWidth - tooltipWidth - 20));
+    top = Math.max(20, Math.min(top, window.innerHeight - tooltipHeight - 20));
+
+    setTooltipStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+    });
+  }, [currentStep]);
 
   useEffect(() => {
-    const step = tutorialSteps[currentStep];
-    if (step.target) {
-      try {
-        const element = document.querySelector(step.target);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          setTargetRect({
-            top: rect.top - 8,
-            left: rect.left - 8,
-            width: rect.width + 16,
-            height: rect.height + 16,
-          });
-        } else {
-          setTargetRect(null);
-        }
-      } catch (e) {
-        setTargetRect(null);
-      }
-    } else {
-      setTargetRect(null);
-    }
-  }, [currentStep]);
+    updateHighlight();
+    window.addEventListener('resize', updateHighlight);
+    window.addEventListener('scroll', updateHighlight);
+    return () => {
+      window.removeEventListener('resize', updateHighlight);
+      window.removeEventListener('scroll', updateHighlight);
+    };
+  }, [updateHighlight]);
 
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
@@ -233,102 +147,195 @@ function Tutorial({ onComplete }) {
     onComplete();
   };
 
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const step = tutorialSteps[currentStep];
   const isLastStep = currentStep === tutorialSteps.length - 1;
   const isFirstStep = currentStep === 0;
-  const isCentered = step.position === 'center' || !targetRect;
 
-  const getTooltipPosition = () => {
-    if (!targetRect || isCentered) return {};
-    
-    const padding = 16;
-    let top, left;
-
-    if (step.position === 'bottom') {
-      top = targetRect.top + targetRect.height + padding;
-      left = targetRect.left + (targetRect.width / 2) - 200;
-    } else if (step.position === 'top') {
-      top = targetRect.top - 200;
-      left = targetRect.left + (targetRect.width / 2) - 200;
-    }
-
-    return { top: `${top}px`, left: `${Math.max(20, left)}px` };
-  };
-
-  return (
+  const content = (
     <>
-      {/* Dark overlay */}
-      <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && handleSkip()} />
+      {/* Overlay */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'transparent',
+          zIndex: 9997,
+        }}
+        onClick={handleSkip}
+      />
 
-      {/* Spotlight on target element */}
-      {targetRect && (
-        <div
-          style={{
-            ...styles.spotlight,
-            top: `${targetRect.top}px`,
-            left: `${targetRect.left}px`,
-            width: `${targetRect.width}px`,
-            height: `${targetRect.height}px`,
-          }}
-        />
-      )}
+      {/* Highlight Box */}
+      {highlightStyle && <div style={highlightStyle} />}
 
       {/* Tooltip */}
-      <div style={isCentered ? styles.tooltipCenter : { ...styles.tooltip, ...getTooltipPosition() }}>
-        <div style={styles.accentBar} />
-        
-        {/* Step indicators */}
-        <div style={styles.stepIndicator}>
-          {tutorialSteps.map((_, idx) => (
-            <div
-              key={idx}
+      <div
+        style={{
+          ...tooltipStyle,
+          background: brand.white,
+          borderRadius: '12px',
+          padding: '0',
+          width: '420px',
+          maxWidth: 'calc(100vw - 40px)',
+          boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5)',
+          zIndex: 10000,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Green accent bar */}
+        <div
+          style={{
+            height: '6px',
+            background: `linear-gradient(90deg, ${brand.green}, ${brand.greenDark})`,
+          }}
+        />
+
+        <div style={{ padding: '24px' }}>
+          {/* Step dots */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '8px',
+              marginBottom: '20px',
+            }}
+          >
+            {tutorialSteps.map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: idx === currentStep ? '24px' : '10px',
+                  height: '10px',
+                  borderRadius: '5px',
+                  background: idx <= currentStep ? brand.green : '#E0E0E0',
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Title */}
+          <h3
+            style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              color: brand.charcoal,
+              letterSpacing: '1px',
+              marginBottom: '12px',
+              textAlign: 'center',
+            }}
+          >
+            {step.title}
+          </h3>
+
+          {/* Content */}
+          <p
+            style={{
+              fontFamily: "'Lato', sans-serif",
+              fontSize: '1rem',
+              color: '#555',
+              lineHeight: 1.7,
+              textAlign: 'center',
+              marginBottom: '24px',
+            }}
+          >
+            {step.content}
+          </p>
+
+          {/* Footer */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span
               style={{
-                ...styles.stepDot,
-                ...(idx === currentStep ? styles.stepDotActive : {}),
-                ...(idx < currentStep ? { background: brand.green } : {}),
-              }}
-            />
-          ))}
-        </div>
-
-        <h3 style={styles.title}>{step.title}</h3>
-        <p style={styles.content}>{step.content}</p>
-
-        <div style={styles.footer}>
-          <span style={styles.progress}>
-            Step {currentStep + 1} of {tutorialSteps.length}
-          </span>
-          <div style={styles.buttons}>
-            {!isLastStep && (
-              <button style={styles.btnSkip} onClick={handleSkip}>
-                Skip Tour
-              </button>
-            )}
-            <button
-              style={styles.btnPrimary}
-              onClick={handleNext}
-              onMouseOver={(e) => {
-                e.target.style.background = brand.greenDark;
-              }}
-              onMouseOut={(e) => {
-                e.target.style.background = brand.green;
+                fontFamily: "'Oswald', sans-serif",
+                fontSize: '0.85rem',
+                color: '#999',
+                letterSpacing: '1px',
               }}
             >
-              {isLastStep ? 'Get Started' : isFirstStep ? "Let's Go!" : 'Next'}
-            </button>
+              {currentStep + 1} / {tutorialSteps.length}
+            </span>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {!isFirstStep && (
+                <button
+                  onClick={handlePrev}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'transparent',
+                    border: `2px solid ${brand.charcoal}`,
+                    color: brand.charcoal,
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    letterSpacing: '1px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  BACK
+                </button>
+              )}
+              
+              {!isLastStep && (
+                <button
+                  onClick={handleSkip}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#999',
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  SKIP
+                </button>
+              )}
+
+              <button
+                onClick={handleNext}
+                style={{
+                  padding: '10px 28px',
+                  background: brand.green,
+                  border: 'none',
+                  color: brand.charcoal,
+                  fontFamily: "'Oswald', sans-serif",
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  letterSpacing: '1px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => e.target.style.background = brand.greenDark}
+                onMouseLeave={(e) => e.target.style.background = brand.green}
+              >
+                {isLastStep ? 'GET STARTED' : isFirstStep ? "LET'S GO" : 'NEXT'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </>
   );
+
+  return ReactDOM.createPortal(content, document.body);
 }
 
 export default Tutorial;
-

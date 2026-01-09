@@ -5,6 +5,7 @@ import IngredientLocker from './components/IngredientLocker';
 import RecipeBuilder from './components/RecipeBuilder';
 import SalesInput from './components/SalesInput';
 import Dashboard from './components/Dashboard';
+import FinancialOverview from './components/FinancialOverview';
 import ExpenseTracker from './components/ExpenseTracker';
 import ReportsPanel from './components/ReportsPanel';
 import TaxCenter from './components/TaxCenter';
@@ -111,6 +112,7 @@ function App() {
   ];
 
   const accountingTabs = [
+    { id: 'financial', label: 'Financial Overview' },
     { id: 'pnl', label: 'P&L Report' },
     { id: 'expenses-new', label: 'Expenses' },
     { id: 'payroll', label: 'Payroll' },
@@ -123,7 +125,7 @@ function App() {
     if (section === 'operations') {
       setActiveTab('dashboard');
     } else {
-      setActiveTab('pnl');
+      setActiveTab('financial');
     }
   };
 
@@ -143,9 +145,28 @@ function App() {
         </div>
         <div className="header-user">
           <span className="user-info">
-            👤 {user?.first_name} {user?.last_name}
+            {user?.first_name} {user?.last_name}
             <span className="user-role">({user?.role})</span>
           </span>
+          <button 
+            className="tour-btn" 
+            onClick={() => setShowTutorial(true)}
+            style={{
+              padding: '8px 16px',
+              marginRight: '12px',
+              background: 'transparent',
+              border: '2px solid #9AC636',
+              color: '#9AC636',
+              fontFamily: "'Oswald', sans-serif",
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              letterSpacing: '1px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            TOUR
+          </button>
           <button className="logout-btn" onClick={handleLogout}>
             Logout
           </button>
@@ -195,6 +216,7 @@ function App() {
         {/* Accounting Section */}
         {activeSection === 'accounting' && (
           <>
+            {activeTab === 'financial' && <FinancialOverview />}
             {activeTab === 'pnl' && <ReportsPanel />}
             {activeTab === 'expenses-new' && <ExpenseTracker />}
             {activeTab === 'payroll' && <PayrollManager />}
